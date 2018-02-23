@@ -116,7 +116,9 @@ local function remove_non_modules(file_list)
       local s3 = string.find(f,"%.m4$")
       local s4 = string.find(f,"Changelog$")
       local s5 = string.find(f,"/%.git")
-      if s1 or s2 or s3 or s4 or s5 then
+      local s6 = string.find(f,"/#.*#$")
+      local s7 = string.find(f,"~$")
+      if s1 or s2 or s3 or s4 or s5 or s6 or s7 then
 	 table.remove(file_list,i)
       else
 	 i = i + 1
