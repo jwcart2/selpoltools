@@ -5,6 +5,8 @@ local refpolicy_get_class_perm_sets = {}
 
 -------------------------------------------------------------------------------
 local lex_get = LEX.get
+local lex_peek = LEX.peek
+local lex_next = LEX.next
 local lex_SOF = LEX.SOF
 local lex_EOF = LEX.EOF
 local lex_END = LEX.END
@@ -94,6 +96,16 @@ local function get_set(lex_state, class_sets, perm_sets)
    while token ~= "}" and token ~= lex_END do
       set[token] = true
       token = lex_get(lex_state)
+   end
+   if lex_peek(lex_state) == "refpolicywarn" then
+      lex_next(lex_state)
+      get_expected(lex_state, "(")
+      get_expected(lex_state, "`")
+      while lex_peek(lex_state) ~= "'" do
+	 lex_next(lex_state)
+      end
+      get_expected(lex_state, "'")
+      get_expected(lex_state, ")")
    end
    get_expected(lex_state, "'")
    get_expected(lex_state, ")")
