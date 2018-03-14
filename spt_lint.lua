@@ -60,7 +60,7 @@ end
 -------------------------------------------------------------------------------
 -- Input
 local path = nil
-local all_files, in_files, inactive_files, missing_files
+local all_files, in_files, inactive_files, missing_files, base_mods
 
 --Output
 local out_file = io.stdout
@@ -108,6 +108,7 @@ if not path then
    in_files = {}
    defs = {}
    tunables = {}
+   base_mods = {}
    while i <= #arg do
       in_files[#in_files+1] = arg[i]
       i = i + 1
@@ -115,7 +116,7 @@ if not path then
 else
    complete_policy = true
    all_files = REFPOL_GET_CONFIG.get_refpolicy_files_directly(path)
-   in_files = REFPOL_GET_CONFIG.get_refpolicy_files(path)
+   in_files, base_mods = REFPOL_GET_CONFIG.get_refpolicy_files(path)
    if in_files then
       inactive_files, missing_files = GET_FILES.get_list_diffs(all_files, in_files)
       if missing_files and next(missing_files) and verbose > 0 then
@@ -184,16 +185,18 @@ MSG.debug_time_and_gc(DEBUG)
 
 local all_decls, mod_decls = DECLS.get_declarations(head, false, verbose)
 
-CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls, defs, verbose)
+CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls, defs, base_mods,
+				       verbose)
 
 CHECK_REQ.check_used_not_declared(head, all_decls, verbose)
 CHECK_REQ.check_required_not_declared(head, all_decls, verbose)
 
-CHECK_REQ.check_used_not_required(head, mod_decls, verbose)
-CHECK_REQ.check_required_not_used(head, all_decls, verbose)
+CHECK_REQ.check_used_not_required(head, mod_decls, base_mods, verbose)
+CHECK_REQ.check_required_not_used(head, all_decls, base_mods, verbose)
 
-CHECK_REQ.check_used_not_declared_module(head, all_decls, mod_decls, verbose)
-CHECK_REQ.check_required_not_declared_module(head, all_decls, mod_decls, verbose)
+CHECK_REQ.check_used_not_declared_module(head, all_decls, mod_decls, base_mods, verbose)
+CHECK_REQ.check_required_not_declared_module(head, all_decls, mod_decls, base_mods,
+					     verbose)
 
 CHECK_REQ.check_inactive_requires_satisfied_externally(head, all_decls, mod_decls, calls, verbose)
 CHECK_REQ.check_active_requires_satisfied_externally(head, all_decls, mod_decls, calls, verbose)

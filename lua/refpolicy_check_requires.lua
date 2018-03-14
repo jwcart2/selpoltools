@@ -116,6 +116,11 @@ local function check_macro_used_not_required(node, kind, do_action, do_block, da
    local decls = MACRO.get_def_decls(node) or {}
    local exp_args = MACRO.get_def_exp_args(node) or {}
 
+   if data.verbose < 2 and data.name and data.base[data.name] then
+      -- Don't check base modules
+      return
+   end
+
    for flavor,values in pairs(used) do
       if flavor == "class" or flavor == "perm" or flavor == "string" or
       flavor == "tunable" or flavor == "level" or flavor == "range" then
@@ -135,7 +140,7 @@ local function check_macro_used_not_required(node, kind, do_action, do_block, da
    end
 end
 
-local function check_used_not_required(head, mod_decls, verbose)
+local function check_used_not_required(head, mod_decls, base, verbose)
    if verbose < 1 then return end
 
    MSG.verbose_out("\nChecking for used but not required", verbose, 0)
@@ -148,7 +153,8 @@ local function check_used_not_required(head, mod_decls, verbose)
       ["macro"] = check_macro_used_not_required,
    }
 
-   local data = {file_action=file_action, mod_decls=mod_decls}
+   local data = {mod_decls=mod_decls, base=base, verbose=verbose,
+		 file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
 end
 refpolicy_check_requires.check_used_not_required = check_used_not_required
@@ -161,6 +167,12 @@ local function check_macro_required_not_used(node, kind, do_action, do_block, da
    local required = MACRO.get_def_requires(node) or {}
    local used = MACRO.get_def_used(node) or {}
    local all_tunables = data.all_decls and data.all_decls["tunable"] or {}
+
+   if data.verbose < 2 and data.name and data.base[data.name] then
+      -- Don't check base modules
+      return
+   end
+
    for flavor,values in pairs(required) do
       if flavor == "class" or flavor == "perm" or flavor == "string" then
 	 -- skipping for now
@@ -178,7 +190,7 @@ local function check_macro_required_not_used(node, kind, do_action, do_block, da
    end
 end
 
-local function check_required_not_used(head, all_decls, verbose)
+local function check_required_not_used(head, all_decls, base, verbose)
    if verbose < 1 then return end
 
    MSG.verbose_out("\nChecking for required but not used", verbose, 0)
@@ -191,7 +203,8 @@ local function check_required_not_used(head, all_decls, verbose)
       ["macro"] = check_macro_required_not_used,
    }
 
-   local data = {file_action=file_action, all_decls=all_decls}
+   local data = {all_decls=all_decls, base=base, verbose=verbose,
+		 file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
 end
 refpolicy_check_requires.check_required_not_used = check_required_not_used
@@ -204,6 +217,11 @@ local function check_macro_used_not_declared_module(node, kind, do_action, do_bl
    local mod_decls = data.mod_decls and data.mod_decls[data.name] or {}
    local all_tunables = all_decls["tunable"] or {}
    local mod_tunables = mod_decls["tunable"] or {}
+
+   if data.name and data.base[data.name] then
+      -- Don't check base modules
+      return
+   end
 
    for flavor,values in pairs(used) do
       if flavor == "class" or flavor == "perm" or flavor == "string" or
@@ -227,7 +245,7 @@ local function check_macro_used_not_declared_module(node, kind, do_action, do_bl
    end
 end
 
-local function check_used_not_declared_module(head, all_decls, mod_decls, verbose)
+local function check_used_not_declared_module(head, all_decls, mod_decls, base, verbose)
    if verbose < 2 then return end
 
    MSG.verbose_out("\nChecking for used but not declared in the module", verbose, 0)
@@ -240,7 +258,8 @@ local function check_used_not_declared_module(head, all_decls, mod_decls, verbos
       ["macro"] = check_macro_used_not_declared_module,
    }
 
-   local data = {all_decls=all_decls, mod_decls=mod_decls, file_action=file_action}
+   local data = {all_decls=all_decls, mod_decls=mod_decls, base=base,
+		 file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
 end
 refpolicy_check_requires.check_used_not_declared_module = check_used_not_declared_module
@@ -253,6 +272,11 @@ local function check_macro_required_not_declared_module(node, kind, do_action, d
    local mod_decls = data.mod_decls and data.mod_decls[data.name] or {}
    local all_tunables = all_decls["tunable"] or {}
    local mod_tunables = mod_decls["tunable"] or {}
+
+   if data.name and data.base[data.name] then
+      -- Don't check base modules
+      return
+   end
 
    for flavor,values in pairs(required) do
       if flavor == "class" or flavor == "perm" or flavor == "string" then
@@ -275,7 +299,8 @@ local function check_macro_required_not_declared_module(node, kind, do_action, d
    end
 end
 
-local function check_required_not_declared_module(head, all_decls, mod_decls, verbose)
+local function check_required_not_declared_module(head, all_decls, mod_decls, base,
+						  verbose)
    if verbose < 2 then return end
 
    MSG.verbose_out("\nChecking for required but not declared in the module", verbose, 0)
@@ -288,7 +313,8 @@ local function check_required_not_declared_module(head, all_decls, mod_decls, ve
       ["macro"] = check_macro_required_not_declared_module,
    }
 
-   local data = {all_decls=all_decls, mod_decls=mod_decls, file_action=file_action}
+   local data = {all_decls=all_decls, mod_decls=mod_decls, base=base,
+		 file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
 end
 refpolicy_check_requires.check_required_not_declared_module = check_required_not_declared_module

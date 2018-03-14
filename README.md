@@ -98,8 +98,8 @@ Verbosity Level 1
 - Duplicate macro definition in inactive files
 - Location of previous macro definition when there is a duplicate macro definition in inactive files
 - List of places where an undefined macro is called
-- Used but not required (Does not check: class, perm, string, tunable, level, and range)
-- Required but not used (Does not check: class, perm, and string)
+- Used but not required in non-base modules (Does not check: class, perm, string, tunable, level, and range)
+- Required but not used in non-base modules (Does not check: class, perm, and string)
 - For inactive macro with require satisfied externally, write out where each require is declared
 
 --------------------------------------------------------------------------------
@@ -113,6 +113,8 @@ Verbosity Level 2
 - For active macro with requires satisfied externally, write out where each require is declared
 - For all macros with requires satisfied externally, write out where the macro is called
 - List of empty macro definitions created for undefined macros
+- Used but not required in base modules (Does not check: class, perm, string, tunable, level, and range)
+- Required but not used in base modules (Does not check: class, perm, and string)
 
 --------------------------------------------------------------------------------
 Verbosity Level 3

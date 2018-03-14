@@ -34,7 +34,7 @@ local function parse_modules_conf(file)
 end
 refpolicy_get_config.parse_modules_conf = parse_modules_conf
 
-local function get_module_files(module_conf_file, prefix, file_list)
+local function get_module_files(module_conf_file, prefix, file_list, base_modules)
    local seen = {}
    local module_names, module_list = parse_modules_conf(module_conf_file)
    if not module_names then
@@ -50,6 +50,9 @@ local function get_module_files(module_conf_file, prefix, file_list)
    for i=1,#module_names do
       local name = module_names[i]
       local value = module_list[name]
+      if value == "base" then
+	 base_modules[name] = true
+      end
       if seen[name] then
 	 MSG.warning("Module "..tostring(name).." is listed more than once")
 	 value = "off"
@@ -80,11 +83,12 @@ local function get_module_files(module_conf_file, prefix, file_list)
 	 end
       end
    end
-   return file_list
+   return file_list, base_modules
 end
 
 local function get_refpolicy_files(prefix)
    local file_list = {}
+   local base_modules = {}
    file_list[#file_list+1] = prefix.."/policy/support/obj_perm_sets.spt"
    file_list[#file_list+1] = prefix.."/policy/flask/initial_sids"
    file_list[#file_list+1] = prefix.."/policy/flask/security_classes"
@@ -101,8 +105,8 @@ local function get_refpolicy_files(prefix)
    file_list[#file_list+1] = prefix.."/policy/support/misc_patterns.spt"
    file_list[#file_list+1] = prefix.."/policy/support/misc_macros.spt"
    local module_conf = prefix.."/policy/modules.conf"
-   file_list = get_module_files(module_conf, prefix, file_list)
-   return file_list
+   file_list = get_module_files(module_conf, prefix, file_list, base_modules)
+   return file_list, base_modules
 end
 refpolicy_get_config.get_refpolicy_files = get_refpolicy_files
 
