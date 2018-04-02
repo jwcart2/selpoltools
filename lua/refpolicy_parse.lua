@@ -1227,8 +1227,10 @@ end
 local function parse_portcon_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local protocol = get_identifier(state, "string")
-   if protocol ~= "tcp" and protocol ~= "udp" then
-      error_message(state, "Expected either \"tcp\" or \"udp\" for the portcon "..
+   if protocol ~= "udp" and protocol ~= "tcp" and protocol ~= "dccp" and
+   protocol ~= "sctp" then
+      error_message(state, "Expected either \"udp\", \"tcp\", \"dccp\", or "..
+		    "\"sctp\" for the portcon "..
 		       "protocol, but got \""..tostring(protocol).."\"")
    end
    local ports = get_ports(state)
