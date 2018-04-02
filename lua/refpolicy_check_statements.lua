@@ -215,20 +215,22 @@ local function check_call(node, kind, do_action, do_block, data)
    local arg_flavors = MACRO.get_def_orig_flavors(macro_def)
    local call_args = MACRO.get_call_orig_args(node)
    for i,flavor in pairs(arg_flavors) do
-      if type(flavor) ~= "table" then
-	 if check_flavor[flavor] then
-	    check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
-				 data.name, data.base)
-	 else
-	    TREE.warning("No function to check flavor: "..tostring(flavor), node)
-	 end
-      else
-	 for _,f in pairs(flavor) do
-	    if check_flavor[f] then
-	       check_flavor[f](node, flavor, call_args[i], data.all, data.mod,
-			       data.name, data.base)
+      if call_args[i] then
+	 if type(flavor) ~= "table" then
+	    if check_flavor[flavor] then
+	       check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
+				    data.name, data.base)
 	    else
-	       TREE.warning("No function to check flavor: "..tostring(f), node)
+	       TREE.warning("No function to check flavor: "..tostring(flavor), node)
+	    end
+	 else
+	    for _,f in pairs(flavor) do
+	       if check_flavor[f] then
+		  check_flavor[f](node, flavor, call_args[i], data.all, data.mod,
+				  data.name, data.base)
+	       else
+		  TREE.warning("No function to check flavor: "..tostring(f), node)
+	       end
 	    end
 	 end
       end
