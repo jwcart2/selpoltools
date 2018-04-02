@@ -38,11 +38,12 @@ local cstr_flavors = {
 }
 
 -------------------------------------------------------------------------------
-local function check_skip(flavor, value, all_decls, mod_decls)
+local function check_skip(flavor, value, all_decls, mod_decls, mod_name,
+			  base_mods, verbose)
 end
 
 local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mod_name,
-				   base_mods)
+				   base_mods, verbose)
    if type(value) ~= "table" then
       local all_flav_decls = all_decls[flavor]
       if not all_flav_decls then
@@ -74,9 +75,10 @@ local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mo
       if mod_flav_decls and mod_flav_decls[value] then
 	 return
       end
-      if base_mods[mod_name] then
-	 for mn,_ in pairs(all_flav_decls[value]) do
-	    if base_mods[mn] or nm == "GLOBAL" then
+
+      for mn,_ in pairs(all_flav_decls[value]) do
+	 if base_mods[mn] or mn == "GLOBAL" then
+	    if base_mods[mod_name] or verbose < 1 then
 	       return
 	    end
 	 end
@@ -88,47 +90,50 @@ local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mo
       for i,v in pairs(value) do
 	 if not set_ops[v] then
 	    check_simple_flavor(node, flavor, v, all_decls, mod_decls, mod_name,
-				base_mods)
+				base_mods, verbose)
 	 end
       end
    end
 end
 
 local function check_level(node, flavor, value, all_decls, mod_decls, mod_name,
-			   base_mods)
+			   base_mods, verbose)
    if type(value) ~= "table" then
       if not level_alias[value] then
 	 check_simple_flavor(node, "sensitivity", value, all_decls, mod_decls, mod_name,
-			     base_mods)
+			     base_mods, verbose)
       end
    else
       local sens = value[1]
       local cats = value[2]
       check_simple_flavor(node, "sensitivity", sens, all_decls, mod_decls, mod_name,
-			  base_mods)
+			  base_mods, verbose)
       if cats then
 	 check_simple_flavor(node, "category", cats, all_decls, mod_decls, mod_name,
-			     base_mods)
+			     base_mods, verbose)
       end
    end
 end
 
 local function check_range(node, flavor, value, all_decls, mod_decls, mod_name,
-			   base_mods)
+			   base_mods, verbose)
    if type(value) ~= "table" then
-      check_level(node, flavor, value, all_decls, mod_decls, mod_name, base_mods)
+      check_level(node, flavor, value, all_decls, mod_decls, mod_name,
+		  base_mods, verbose)
    else
       local low = value[1]
       local high = value[2]
-      check_level(node, flavor, low, all_decls, mod_decls, mod_name, base_mods)
+      check_level(node, flavor, low, all_decls, mod_decls, mod_name,
+		  base_mods, verbose)
       if high then
-	 check_level(node, flavor, high, all_decls, mod_decls, mod_name, base_mods)
+	 check_level(node, flavor, high, all_decls, mod_decls, mod_name,
+		     base_mods, verbose)
       end
    end
 end
 
 local function check_context(node, flavor, value, all_decls, mod_decls, mod_name,
-			     base_mods)
+			     base_mods, verbose)
    if type(value) ~= "table" then
       TREE.warning("Expected context to contain a table", node)
    end
@@ -139,23 +144,23 @@ local function check_context(node, flavor, value, all_decls, mod_decls, mod_name
    else
       if value[1] ~= "system_u" then
 	 check_simple_flavor(node, "user", value[1], all_decls, mod_decls, mod_name,
-			     base_mods)
+			     base_mods, verbose)
       end
       if value[2] ~= "object_r" then
 	 check_simple_flavor(node, "role", value[2], all_decls, mod_decls, mod_name,
-			     base_mods)
+			     base_mods, verbose)
       end
       check_simple_flavor(node, "type", value[3], all_decls, mod_decls, mod_name,
-			  base_mods)
+			  base_mods, verbose)
       if value[4] then
 	 check_range(node, "range", value[4], all_decls, mod_decls, mod_name,
-		     base_mods)
+		     base_mods, verbose)
       end
    end
 end
 
 local function check_constraint_expr(node, flavor, value, all_decls, mod_decls, mod_name,
-				     base_mods)
+				     base_mods, verbose)
    if type(value) ~= "table" then
       TREE.warning("Expected constraint expression to contain a table", node)
    end
@@ -163,17 +168,18 @@ local function check_constraint_expr(node, flavor, value, all_decls, mod_decls, 
    if f then
       if not cstr_flavors[value[3]] then
 	 if f == "level" then
-	    check_level(node, f, value[3], all_decls, mod_decls)
+	    check_level(node, f, value[3], all_decls, mod_decls, mod_name,
+			base_mods, verbose)
 	 else
-	    check_simple_flavor(node, cstr_flavors[value[1]], value[3], all_decls,
-				mod_decls, name, base)
+	    check_simple_flavor(node, f, value[3], all_decls, mod_decls, mod_name,
+				base_mods, verbose)
 	 end
       end
    else
       for _,v in pairs(value) do
 	 if type(v) == "table" then
 	    check_constraint_expr(node, flavor, v, all_decls, mod_decls, mod_name,
-				  base_mods)
+				  base_mods, verbose)
 	 end
       end
    end
@@ -219,7 +225,7 @@ local function check_call(node, kind, do_action, do_block, data)
 	 if type(flavor) ~= "table" then
 	    if check_flavor[flavor] then
 	       check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
-				    data.name, data.base)
+				    data.name, data.base, data.verbose)
 	    else
 	       TREE.warning("No function to check flavor: "..tostring(flavor), node)
 	    end
@@ -227,7 +233,7 @@ local function check_call(node, kind, do_action, do_block, data)
 	    for _,f in pairs(flavor) do
 	       if check_flavor[f] then
 		  check_flavor[f](node, flavor, call_args[i], data.all, data.mod,
-				  data.name, data.base)
+				  data.name, data.base, data.verbose)
 	       else
 		  TREE.warning("No function to check flavor: "..tostring(f), node)
 	       end
@@ -247,7 +253,7 @@ local function check_statement(node, kind, do_action, do_block, data)
    for i,flavor in pairs(flavors) do
       if check_flavor[flavor] then
 	 check_flavor[flavor](node, flavor, node_data[i], data.all, data.mod, data.name,
-			      data.base)
+			      data.base, data.verbose)
       else
 	 TREE.warning("No function to check flavor: "..tostring(flavor), node)
       end
@@ -284,8 +290,8 @@ local function check_statements_in_policy(head, all_decls, mod_decls, macro_defs
    statement_actions["call"] = check_call
    statement_actions["macro"] = skip
 
-   local data = {flavors=statement_flavors, actions=statement_actions,
-		 all=all_decls, mod=mod_decls, macros=macro_defs, base=base}
+   local data = {flavors=statement_flavors, actions=statement_actions, all=all_decls,
+		 mod=mod_decls, macros=macro_defs, base=base, verbose=verbose}
 
    local actions = {
       ["file"] = check_file,
