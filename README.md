@@ -25,7 +25,7 @@ INTRODUCTION
 
 DEPENDENCIES
 
-	gcc and lua
+	gcc, lua, and lua-devel
 
 BUILD
 
