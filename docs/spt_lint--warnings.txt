@@ -8,6 +8,9 @@ SUMMARY OF WARNINGS
 
 	Not declared in module
 	  An identifier outside of a macro is not declared in the module it is used in.
+	  Identifiers used in a base module that are declared in another base module
+	  are not reported. Identifiers used in a non-base module that are declared
+	  in a base module are reported at verbosity levels 1 and higher.
 	  Does not check sensitivities, categories, classes, permissions, or strings.
 	
 	Used but not declared in policy
@@ -17,35 +20,38 @@ SUMMARY OF WARNINGS
 	  Does not check: class, perm, string, tunable, level, and range
 
 	Required but not declared in policy
-	  An identifier in a macro is required in a block, but not declared anywhere
-	  in policy. The macro will always be removed from policy.
+	  An identifier in a macro is required, but not declared anywhere in policy.
+	  The macro will always be removed from policy.
 	  Does not check: class, perm, and string
 
 	Used but not required in non-base modules
-  	  An identifier in a macro is used but not declared or required. Non-local
-	  modules should use macros to write policy involving identifiers declared in
-	  other modules. Local modules should put used identifiers in require blocks.
-	  Modules that form the base module can violate this convention when referring
-	  to the identifiers in other modules that will be a part of the base module.
+  	  An identifier in a macro is used but not declared in the macro or required.
+	  Non-local modules should use macros to write policy involving identifiers
+	  declared in other modules. Local modules should put used identifiers in
+	  require blocks. Modules that form the base module can violate this convention
+	  when referring to the identifiers in other modules that will be a part of the
+	  base module.
 	  Does not check: class, perm, string, tunable, level, and range
 
 	Required but not used in non-base modules
-	  An identifier is required in a block, but not used in the block. There can
-	  be legitimate reasons for doing this, but it can cause suprising behavior
-	  because it is normally expected that a block will remain if all the
-	  identifiers used in the block are declared and this can break that behavior.
+	  An identifier is required, but not used in the block. There can be legitimate
+	  reasons for doing this, but it can cause suprising behavior because it is
+	  normally expected that a block will remain if all the identifiers used in the
+	  block are declared and this can break that behavior.
 	  Does not check: class, perm, and string
 
 	Used but not declared in non-base modules
 	  An identifier is used in a macro but declared external to the module.
 	  Non-local modules should use macros to write policy involving identifiers
 	  declared in other modules.
+	  Does not check: class, perm, string, level and range
 
 	Required but not declared in non-base modules
-	  An identifier is required in a block, but declared external to the module.
+	  An identifier is required in a macro, but declared external to the module.
 	  Normally, identifiers that are required are declared in the module. In this
 	  case, if the module containing the external declaration is removed, the
 	  macro would also be removed.
+	  Does not check: class, perm, and string
 
 	Macro require in inactive policy satisfied external to the module
 	  The require block for a macro is completely satisified without relying on
@@ -119,6 +125,9 @@ DETAILED LIST OF WARNING
 	 - Required but not declared (Does not check: class, perm, and string)
 	 - Macro require in inactive policy satisfied external to the module (Does not
 	   check: class, perm, and string)
+	 - Identifier not declared in policy
+	 - Identifier not declared in module - For an identifier declared in a non-base
+	   module and used in a different non-base module.
 
 	 Verbosity Level 1
 
@@ -137,6 +146,8 @@ DETAILED LIST OF WARNING
 	   and string)
 	 - For inactive macro with require satisfied externally, write out where each
 	   require is declared
+	 - Identifier not declared in module - For an identifier declared in a base
+	   module and used in a non-base module.
 
 	 Verbosity Level 2
 
