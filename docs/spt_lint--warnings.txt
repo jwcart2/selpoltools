@@ -2,6 +2,21 @@ spt_lint.lua Warnings
 
 SUMMARY OF WARNINGS
 
+	Call has more arguments than expected
+	  A macro call has more arguments than the definition has parameters. Nothing
+	  will be reported if verbosity level is 0 and the number of unused parameters
+	  (unused="true" in the macro documentation block) equals or exceeds the number
+	  of extra arguments. Nothing will also be reported if verbosity is less than
+	  two and the macro has "stub" in its name.
+
+	Call has less arguments than expected
+	  A macro call has less arguments than the definition has parameters. Nothing
+	  will be reported if verbosity level is less than two and the number of
+	  optional parameters (optional="true" in the macro documentation block) equals
+	  or exceeds the number of missing arguments. Nothing will be reported at
+	  any verbosity level for a macro that has "filetrans" in its name that is
+	  short one argument.
+
 	Not declared in policy
 	  An identifier outside of a macro is not declared anywhere in policy.
 	  Does not check classes, permissions, or strings.
