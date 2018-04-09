@@ -117,12 +117,19 @@ end
 
 local function report_and_fix_parameter_holes(flavors, max, name, node, verbose)
    -- Reports holes in macro parameters. ex/ Has $2, but no $1
+   local param_info = MACRO.get_def_param_info(node)
+   local num_unused = param_info[2]
+
    for i=1,max do
       if not flavors[i] then
-	 local param = "$"..tostring(i)
-	 TREE.warning("Unused macro parameter: "..param.." in "..tostring(name).."()",
-		      node)
 	 flavors[i] = UNUSED_FLAVOR
+	 if num_unused > 0 then
+	    num_unused = num_unused - 1
+	 else
+	    local param = "$"..tostring(i)
+	    TREE.warning("Unused macro parameter: "..param.." in "..tostring(name).."()",
+			 node)
+	 end
       end
    end
 end
