@@ -1350,9 +1350,11 @@ local function parse_conditional_block(state, kind, cur, node, parse_func)
    local notallowed = {policy_module=true, module=true, template=true,
 		       interface=true, class=true, common=true, gen_tunable=true} 
    if kind == "if" then
+      node_set_kind(node, "boolif")
       local cond_exp = get_conditional_expr(state, "bool")
       node_set_data(node, {cond_exp})
    elseif kind == "optional" then
+      warning_message(state, "Found optional", 0)
    end
    get_expected(state, "{")
 
@@ -1373,18 +1375,18 @@ local function parse_m4_conditional_block(state, kind, cur, node, parse_func)
 		       interface=true, gen_tunable=true}
    get_expected(state, "(")
    if kind == "tunable_policy" then
-      node_set_kind(node, "if")
+      node_set_kind(node, "tunif")
       local cond_exp = get_m4_conditional_expr(state, "tunable")
       IFDEF.set_conditional(node, cond_exp)
       get_expected(state, ",")
    elseif kind == "ifdef" then
       node_set_kind(node, "ifdef")
-      local cond_exp = get_m4_conditional_expr(state, "tunable")
+      local cond_exp = get_m4_conditional_expr(state, "string")
       IFDEF.set_conditional(node, cond_exp)
       get_expected(state, ",")
    elseif kind == "ifndef" then
       node_set_kind(node, "ifdef")
-      local cond_exp = get_m4_conditional_expr(state, "tunable")
+      local cond_exp = get_m4_conditional_expr(state, "string")
       cond_exp = {"!", cond_exp}
       IFDEF.set_conditional(node, cond_exp)
       get_expected(state, ",")
