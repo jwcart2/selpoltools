@@ -97,6 +97,20 @@ SUMMARY OF WARNINGS
 	  have one or more duplicate declarations. Conflicting modules are always
 	  reported.
 
+	Base modules needed by other base modules
+	Base modules needed by non-base modules
+	Non-base, non-contrib modules needed by other non-base, non-contrib modules
+	Non-base, non-contrib modules needed by contrib modules
+	Contrib modules needed by other contrib modules
+	Non-base modules needed by base modules
+	  Identifies modules that cannot be installed without another module because
+	  they are dependent on either a declaration or macro definition from that
+	  module. Only the case of a non-base module being needed by a base module is
+	  normally reported because this is always a problem. On the other hand, a
+	  module depending on a base module is never a problem, since the base module
+	  must be installed, and is only reported at the highest verbosity levels for
+	  informational purposes.
+
 DETAILED LIST OF WARNING
 
 	 Verbosity Level 0
@@ -158,6 +172,7 @@ DETAILED LIST OF WARNING
 	 - Identifier not declared in module - For an identifier declared in a non-base
 	   module and used in a different non-base module.
 	 - Identifier is declared more than once and in different files.
+	 - Non-base modules needed by base modules
 
 	 Verbosity Level 1
 
@@ -178,6 +193,7 @@ DETAILED LIST OF WARNING
 	   require is declared
 	 - Identifier not declared in module - For an identifier declared in a base
 	   module and used in a non-base module.
+	 - Contrib modules needed by other contrib modules
 
 	 Verbosity Level 2
 
@@ -199,6 +215,8 @@ DETAILED LIST OF WARNING
 	   tunable, level, and range)
 	 - Required but not used in base modules (Does not check: class, perm, and
 	   string)
+	 - Non-base, non-contrib modules needed by other non-base, non-contrib modules
+	 - Non-base, non-contrib modules needed by contrib modules
 
 	 Verbosity Level 3
 
@@ -210,3 +228,5 @@ DETAILED LIST OF WARNING
 	 - Found require block outside of a macro definition. This is not wrong and
 	   occurs in a few places, but it is unusual
 	 - Identifier declared more than once in the same module.
+	 - Base modules needed by other base modules
+	 - Base modules needed by non-base modules

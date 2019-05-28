@@ -39,6 +39,7 @@ local MACROS_EXPAND = require "refpolicy_macros_expand"
 local MACROS_UNDEF = require "refpolicy_macros_undefined"
 
 local MODS_CONFLICT = require "refpolicy_modules_conflicting"
+local MODS_DEPEND = require "refpolicy_modules_dependencies"
 
 local DECLS = require "refpolicy_declarations"
 local MLS = require "refpolicy_mls"
@@ -187,7 +188,8 @@ MSG.debug_time_and_gc(DEBUG)
 
 local all_decls, mod_decls, conflicting = DECLS.get_declarations(head, false, verbose)
 
-CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls, defs, modules, verbose)
+local dependencies = CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls,
+							    defs, modules, verbose)
 
 CHECK_REQ.check_used_not_declared(head, all_decls, verbose)
 CHECK_REQ.check_required_not_declared(head, all_decls, verbose)
@@ -205,6 +207,7 @@ CHECK_REQ.check_active_requires_satisfied_externally(head, all_decls, mod_decls,
 						     verbose)
 
 MODS_CONFLICT.list_conflicting_modules(conflicting, modules, verbose)
+MODS_DEPEND.list_dependent_modules(dependencies, modules, verbose)
 
 MSG.debug_time_and_gc(DEBUG)
 
