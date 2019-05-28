@@ -39,6 +39,13 @@ SUMMARY OF WARNINGS
 	  The macro will always be removed from policy.
 	  Does not check: class, perm, and string
 
+	Duplicate declaration
+	  An identifier is declared more than once. There is the possibility of false
+	  positives if the declaration happens in an ifdef. Roles are allowed to be
+	  declared multiple times, so they are not reported. Duplicate declarations
+	  that occur in the same module are only reported at verbosity level 3, since
+	  these are most likely to be a false positive.
+
 	Used but not required in non-base modules
   	  An identifier in a macro is used but not declared in the macro or required.
 	  Non-local modules should use macros to write policy involving identifiers
@@ -82,6 +89,13 @@ SUMMARY OF WARNINGS
 	  always be included in the policy. This really only becomes a problem if
 	  the module is later made inactive.
 	  Does not check: class, perm, and string
+
+	Base modules conflicting with other base modules
+	Non-base modules conflicting with base modules
+	Non-base modules conflicting with other non-base modules
+	  Identifies modules that cannot be installed at the same time because they
+	  have one or more duplicate declarations. Conflicting modules are always
+	  reported.
 
 DETAILED LIST OF WARNING
 
@@ -143,6 +157,7 @@ DETAILED LIST OF WARNING
 	 - Identifier not declared in policy
 	 - Identifier not declared in module - For an identifier declared in a non-base
 	   module and used in a different non-base module.
+	 - Identifier is declared more than once and in different files.
 
 	 Verbosity Level 1
 
@@ -194,3 +209,4 @@ DETAILED LIST OF WARNING
 	   being called)
 	 - Found require block outside of a macro definition. This is not wrong and
 	   occurs in a few places, but it is unusual
+	 - Identifier declared more than once in the same module.

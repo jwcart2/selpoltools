@@ -6,49 +6,94 @@ local TREE = require "tree"
 local refpolicy_decls = {}
 
 -------------------------------------------------------------------------------
+local function add_identifier_no_check(decls, flavor, identifier, node)
+   decls[flavor] = decls[flavor] or {}
+   if not decls[flavor][identifier] then
+      decls[flavor][identifier] = node
+   end
+end
+
+local function add_identifier(decls, flavor, identifier, node, verbose)
+   decls[flavor] = decls[flavor] or {}
+   if decls[flavor][identifier] then
+      local f1 = TREE.get_filename(node)
+      local f2 = TREE.get_filename(decls[flavor][identifier])
+      if f1 ~= f2 or verbose > 2 then
+	 local s1 = "Duplicate declaration: "..tostring(flavor).." "..tostring(identifier)
+	 local s2 = string.rep(" ",string.len(s1))
+	 TREE.warning(s1, node)
+	 TREE.warning(s2, decls[flavor][identifier])
+      end
+   else
+      decls[flavor][identifier] = node
+   end
+end
+
+local function add_decls_to_all(all, decls, name, conflicting, verbose)
+   for flavor, decl_tab in pairs(decls) do
+      all[flavor] = all[flavor] or {}
+      for decl,node in pairs(decl_tab) do
+	 if all[flavor][decl] then
+	    if flavor ~= "role" then
+	       local f1 = TREE.get_filename(node)
+	       local s1 = "Duplicate declaration: "..tostring(flavor).." "..
+		  tostring(decl)
+	       local s2 = string.rep(" ",string.len(s1))
+	       TREE.warning(s1, node)
+	       for mod_name, prev in pairs(all[flavor][decl]) do
+		  local f2 = TREE.get_filename(prev)
+		  if f1 ~= f2 or verbose > 2 then
+		     TREE.warning(s2, prev)
+		  end
+		  conflicting[name] = conflicting[name] or {}
+		  conflicting[name][mod_name] = true
+	       end
+	    end
+	    if not all[flavor][decl][name] then
+	       all[flavor][decl][name] = node
+	    end
+	 else
+	    all[flavor][decl] = {[name]=node}
+	 end
+      end
+   end
+end
+
+-------------------------------------------------------------------------------
 local function skip(node, kind, do_action, do_block, data)
 end
 
 local function get_bool_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "bool"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "bool", node_data[1], node, data.verbose)
 end
 
 local function get_tunable_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "tunable"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "tunable", node_data[1], node, data.verbose)
 end
 
 local function get_user_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "user"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "user", node_data[1], node, data.verbose)
 end
 
 local function get_role_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "role"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   -- Roles can be duplicated
+   add_identifier_no_check(data.decls, "role", node_data[1], node)
 end
 
 local function get_type_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "type"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "type", node_data[1], node, data.verbose)
    local aliases = node_data[2]
    if aliases then
       if type(aliases) ~= "table" then
-	 data.decls[flavor][aliases] = true
+	 add_identifier(data.decls, "type", aliases, node, data.verbose)
       else
 	 for _,alias in pairs(aliases) do
-	    data.decls[flavor][alias] = true
+	    add_identifier(data.decls, "type", alias, node, data.verbose)
 	 end
       end
    end
@@ -56,44 +101,36 @@ end
 
 local function get_typealias_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "type"
-   data.decls[flavor] = data.decls[flavor] or {}
    local aliases = node_data[2]
    if type(aliases) ~= "table" then
-      data.decls[flavor][aliases] = true
+      add_identifier(data.decls, "type", aliases, node, data.verbose)
    else
       for _,alias in pairs(aliases) do
-	 data.decls[flavor][alias] = true
+	 add_identifier(data.decls, "type", alias, node, data.verbose)
       end
    end
 end
 
 local function get_attribute_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "type"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "type", node_data[1], node, data.verbose)
 end
 
 local function get_attribute_role_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "role"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "role", node_data[1], node, data.verbose)
 end
 
 local function get_sensitivity_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "sensitivity"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "sensitivity", node_data[1], node, data.verbose)
    local aliases = node_data[2]
    if aliases then
       if type(aliases) ~= "table" then
-	 data.decls[flavor][aliases] = true
+	 add_identifier(data.decls, "sensitivity", aliases, node, data.verbose)
       else
 	 for _,alias in pairs(aliases) do
-	    data.decls[flavor][alias] = true
+	    add_identifier(data.decls, "sensitivity", alias, node, data.verbose)
 	 end
       end
    end
@@ -101,16 +138,14 @@ end
 
 local function get_category_decl(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local flavor = "category"
-   data.decls[flavor] = data.decls[flavor] or {}
-   data.decls[flavor][node_data[1]] = true
+   add_identifier(data.decls, "category", node_data[1], node, data.verbose)
    local aliases = node_data[2]
    if aliases then
       if type(aliases) ~= "table" then
-	 data.decls[flavor][aliases] = true
+	 add_identifier(data.decls, "category", aliases, node, data.verbose)
       else
 	 for _,alias in pairs(aliases) do
-	    data.decls[flavor][alias] = true
+	    add_identifier(data.decls, "category", alias, node, data.verbose)
 	 end
       end
    end
@@ -120,15 +155,18 @@ end
 local function get_call_decls(node, kind, do_action, do_block, data)
    local call_decls = MACRO.get_call_decls(node)
    for flavor, decl_tab in pairs(call_decls) do
-      data.decls[flavor] = data.decls[flavor] or {}
       for d,_ in pairs(decl_tab) do
-	 data.decls[flavor][d] = true
+	 if flavor ~= "role" then
+	    add_identifier(data.decls, flavor, d, node, data.verbose)
+	 else
+	    add_identifier_no_check(data.decls, "role", d, node)
+	 end
       end
    end
 end
 
 -------------------------------------------------------------------------------
-local function get_declarations_from_block(block, expanded)
+local function get_declarations_from_block(block, expanded, verbose)
    local block_actions = {
       ["bool"] = get_bool_decl,
       ["tunable"] = get_tunable_decl,
@@ -147,24 +185,18 @@ local function get_declarations_from_block(block, expanded)
       block_actions["call"] = get_call_decls
    end
    local decls = {}
-   local data = {decls=decls}
+   local data = {decls=decls, verbose=verbose}
    TREE.walk_normal_tree(block, block_actions, data)
    return decls
 end
 
 local function get_declarations_from_module(node, kind, do_action, do_block, data)
    local block = NODE.get_block(node)
-   local decls = get_declarations_from_block(block, data.expanded)
+   local decls = get_declarations_from_block(block, data.expanded, data.verbose)
    local mod_data = NODE.get_data(node)
    local name = mod_data[1]
    data.mod[name] = decls
-   for flavor, decl_tab in pairs(decls) do
-      data.all[flavor] = data.all[flavor] or {}
-      for d,_ in pairs(decl_tab) do
-	 data.all[flavor][d] = data.all[flavor][d] or {}
-	 data.all[flavor][d][name] = true
-      end
-   end
+   add_decls_to_all(data.all, decls, name, data.conflicting, data.verbose)
 end
 
 -------------------------------------------------------------------------------
@@ -173,24 +205,20 @@ local function get_declarations(head, expanded, verbose)
 
    local all_decls = {}
    local mod_decls = {}
+   local conflicting = {}
 
    local decl_action = {
       ["macro"] = skip,
       ["module"] = get_declarations_from_module,
    }
-   local data = {all=all_decls, mod=mod_decls, expanded=expanded}
+   local data = {all=all_decls, mod=mod_decls, expanded=expanded,
+		 conflicting=conflicting, verbose=verbose}
    TREE.walk_normal_tree(head, decl_action, data)
 
-   local global_decls = get_declarations_from_block(head, expanded)
-   for flavor, decl_tab in pairs(global_decls) do
-      all_decls[flavor] = all_decls[flavor] or {}
-      for d,_ in pairs(decl_tab) do
-	 all_decls[flavor][d] = all_decls[flavor][d] or {}
-	 all_decls[flavor][d]["GLOBAL"] = true
-      end
-   end
+   local global_decls = get_declarations_from_block(head, expanded, verbose)
+   add_decls_to_all(all_decls, global_decls, "GLOBAL", conflicting, verbose)
 
-   return all_decls, mod_decls
+   return all_decls, mod_decls, conflicting
 end
 refpolicy_decls.get_declarations = get_declarations
 
