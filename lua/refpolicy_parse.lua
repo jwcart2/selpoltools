@@ -724,6 +724,7 @@ local function parse_default_rule(state, kind, cur, node)
       error_message(state, "Expected either \"source\" or \"target\" for default rule,"..
 		       " but got \""..tostring(default).."\"")
    end
+   get_expected(state, ";")
    node_set_data(node, {class, default})
    return node
 end
@@ -741,6 +742,7 @@ local function parse_default_range_rule(state, kind, cur, node)
       error_message(state, "Expected \"low\", \"high\", or \"low_high\" for default"..
 		       " range rule, but got \""..tostring(range).."\"")
    end
+   get_expected(state, ";")
    node_set_data(node, {class, default, range})
    return node
 end
@@ -895,6 +897,7 @@ end
 local function parse_permissive_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local type_ = get_identifier(state, "type")
+   get_expected(state, ";")
    node_set_data(node, {type_})
    return node
 end
