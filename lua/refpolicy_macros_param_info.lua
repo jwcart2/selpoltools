@@ -25,7 +25,8 @@ local function get_param_info_from_file(file, defs)
       elseif c == "#" then
 	 if string_find(l, "optional=\"true\"") then
 	    optional = optional + 1
-	 elseif string_find(l, "unused=\"true\"") then
+	 end
+	 if string_find(l, "unused=\"true\"") then
 	    unused = unused + 1
 	 end
       else
