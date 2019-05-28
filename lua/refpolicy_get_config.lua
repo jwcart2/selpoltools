@@ -6,7 +6,7 @@ local refpolicy_get_config = {}
 -------------------------------------------------------------------------------
 local function parse_modules_conf(file)
    local names = {}
-   local module_list = {}
+   local module_values = {}
 
    local f = io.open(file)
    if not f then
@@ -26,19 +26,20 @@ local function parse_modules_conf(file)
 	 s,e,name,value = string.find(l,"([%S]*)[=%s]*([%S]*)")
 	 if name and value ~= "" and value ~= "off" then
 	    names[#names+1] = name
-	    module_list[name] = value
+	    module_values[name] = value
 	 end
       end
    end
-   return names, module_list
+   return module_values, names
 end
 refpolicy_get_config.parse_modules_conf = parse_modules_conf
 
-local function get_module_files(module_conf_file, prefix, file_list, base_modules)
+local function get_module_files(module_conf_file, prefix, file_list)
    local seen = {}
-   local module_names, module_list = parse_modules_conf(module_conf_file)
+   local modules = {}
+   local module_values, module_names = parse_modules_conf(module_conf_file)
    if not module_names then
-      return nil
+      return {}, nil
    end
    local path = prefix.."/policy/modules/"
    local layer_str = io.popen("dir "..path):read()
@@ -49,10 +50,7 @@ local function get_module_files(module_conf_file, prefix, file_list, base_module
    table.sort(module_names)
    for i=1,#module_names do
       local name = module_names[i]
-      local value = module_list[name]
-      if value == "base" then
-	 base_modules[name] = true
-      end
+      local value = module_values[name]
       if seen[name] then
 	 MSG.warning("Module "..tostring(name).." is listed more than once")
 	 value = "off"
@@ -74,6 +72,13 @@ local function get_module_files(module_conf_file, prefix, file_list, base_module
 	    end
 	 end
 	 if layer then
+	    if value == "base" then
+	       modules[name] = "base"
+	    elseif layer == "contrib" then
+	       modules[name] = "contrib"
+	    else
+	       modules[name] = "other"
+	    end
 	    local base = path..layer.."/"..name
 	    file_list[#file_list+1] = base..".fc"
 	    file_list[#file_list+1] = base..".if"
@@ -83,18 +88,18 @@ local function get_module_files(module_conf_file, prefix, file_list, base_module
 	 end
       end
    end
-   return file_list, base_modules
+   return modules, file_list
 end
 
 local function get_refpolicy_files(prefix)
    local file_list = {}
-   local base_modules = {}
    file_list[#file_list+1] = prefix.."/policy/support/obj_perm_sets.spt"
    file_list[#file_list+1] = prefix.."/policy/flask/initial_sids"
    file_list[#file_list+1] = prefix.."/policy/flask/security_classes"
    file_list[#file_list+1] = prefix.."/policy/flask/access_vectors"
    file_list[#file_list+1] = prefix.."/policy/constraints"
-   file_list[#file_list+1] = prefix.."/policy/mcs"
+   -- mcs will be in the inactive files
+   -- file_list[#file_list+1] = prefix.."/policy/mcs"
    file_list[#file_list+1] = prefix.."/policy/mls"
    file_list[#file_list+1] = prefix.."/policy/users"
    file_list[#file_list+1] = prefix.."/policy/global_tunables"
@@ -105,8 +110,7 @@ local function get_refpolicy_files(prefix)
    file_list[#file_list+1] = prefix.."/policy/support/misc_patterns.spt"
    file_list[#file_list+1] = prefix.."/policy/support/misc_macros.spt"
    local module_conf = prefix.."/policy/modules.conf"
-   file_list = get_module_files(module_conf, prefix, file_list, base_modules)
-   return file_list, base_modules
+   return get_module_files(module_conf, prefix, file_list)
 end
 refpolicy_get_config.get_refpolicy_files = get_refpolicy_files
 

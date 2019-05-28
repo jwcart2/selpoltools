@@ -60,7 +60,7 @@ end
 -------------------------------------------------------------------------------
 -- Input
 local path = nil
-local all_files, in_files, inactive_files, missing_files, base_mods
+local all_files, in_files, inactive_files, missing_files, modules
 
 --Output
 local out_file = io.stdout
@@ -108,7 +108,7 @@ if not path then
    in_files = {}
    defs = {}
    tunables = {}
-   base_mods = {}
+   modules = {}
    while i <= #arg do
       in_files[#in_files+1] = arg[i]
       i = i + 1
@@ -116,22 +116,22 @@ if not path then
 else
    complete_policy = true
    all_files = REFPOL_GET_CONFIG.get_refpolicy_files_directly(path)
-   in_files, base_mods = REFPOL_GET_CONFIG.get_refpolicy_files(path)
+   modules, in_files = REFPOL_GET_CONFIG.get_refpolicy_files(path)
    if in_files then
       inactive_files, missing_files = GET_FILES.get_list_diffs(all_files, in_files)
-      if missing_files and next(missing_files) and verbose > 0 then
+      if missing_files and next(missing_files) and verbose >= 1 then
 	 MSG.warning("The following files were not found:\n")
 	 table.sort(missing_files)
 	 for i=1,#missing_files do
-	    MSG.warning("  ",tostring(missing_files[i]),"\n")
+	    MSG.warning("  "..tostring(missing_files[i]).."\n")
 	 end
       end
 
-      if inactive_files and next(inactive_files) and verbose > 1 then
-	 io.stderr:write("The following files are inactive:\n")
+      if inactive_files and next(inactive_files) and verbose >= 2 then
+	 MSG.warning("The following files are inactive:\n")
 	 table.sort(inactive_files)
 	 for i=1,#inactive_files do
-	    MSG.warning("  ",tostring(inactive_files[i]),"\n")
+	    MSG.warning("  "..tostring(inactive_files[i]).."\n")
 	 end
       end
    else
@@ -185,21 +185,22 @@ MSG.debug_time_and_gc(DEBUG)
 
 local all_decls, mod_decls = DECLS.get_declarations(head, false, verbose)
 
-CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls, defs, base_mods,
-				       verbose)
+CHECK_STATE.check_statements_in_policy(head, all_decls, mod_decls, defs, modules, verbose)
 
 CHECK_REQ.check_used_not_declared(head, all_decls, verbose)
 CHECK_REQ.check_required_not_declared(head, all_decls, verbose)
 
-CHECK_REQ.check_used_not_required(head, mod_decls, base_mods, verbose)
-CHECK_REQ.check_required_not_used(head, all_decls, base_mods, verbose)
+CHECK_REQ.check_used_not_required(head, mod_decls, modules, verbose)
+CHECK_REQ.check_required_not_used(head, all_decls, modules, verbose)
 
-CHECK_REQ.check_used_not_declared_module(head, all_decls, mod_decls, base_mods, verbose)
-CHECK_REQ.check_required_not_declared_module(head, all_decls, mod_decls, base_mods,
+CHECK_REQ.check_used_not_declared_module(head, all_decls, mod_decls, modules, verbose)
+CHECK_REQ.check_required_not_declared_module(head, all_decls, mod_decls, modules,
 					     verbose)
 
-CHECK_REQ.check_inactive_requires_satisfied_externally(head, all_decls, mod_decls, calls, verbose)
-CHECK_REQ.check_active_requires_satisfied_externally(head, all_decls, mod_decls, calls, verbose)
+CHECK_REQ.check_inactive_requires_satisfied_externally(head, all_decls, mod_decls, calls,
+						       verbose)
+CHECK_REQ.check_active_requires_satisfied_externally(head, all_decls, mod_decls, calls,
+						     verbose)
 
 MSG.debug_time_and_gc(DEBUG)
 
