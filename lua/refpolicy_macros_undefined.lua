@@ -43,7 +43,7 @@ local function find_and_add_undefined_macros(defs, inactive_defs, calls, file_pa
 	 local optional = 1
 	 local unused = 1
 	 MACRO.set_def_data(def, name, false, false, {}, used, false,
-			    {optional, unused})
+			    {optional, unused}, false)
 	 cur = TREE.add_node(cur, def)
       end
    end

@@ -111,6 +111,16 @@ SUMMARY OF WARNINGS
 	  must be installed, and is only reported at the highest verbosity levels for
 	  informational purposes.
 
+	Call to deprecated macro
+	  A call is made to a macro that has been deprecated. The call should be updated
+	  to use the new call.
+
+	Call to unimplemented macro
+	  A call is made to a macro that has not been implemented. This occurs in
+	  Fedora's policy when policy brought in from Refpolicy refers to macros that
+	  do not exist. It is easier to create a macro that gives a warning and then
+	  fill in the macro later.
+
 DETAILED LIST OF WARNING
 
 	 Verbosity Level 0

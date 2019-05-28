@@ -37,6 +37,7 @@ local MACROS_PARAM = require "refpolicy_macros_param_info"
 local MACROS_PROCESS = require "refpolicy_macros_process"
 local MACROS_EXPAND = require "refpolicy_macros_expand"
 local MACROS_UNDEF = require "refpolicy_macros_undefined"
+local MACROS_AVOID = require "refpolicy_macros_avoid"
 
 local MODS_CONFLICT = require "refpolicy_modules_conflicting"
 local MODS_DEPEND = require "refpolicy_modules_dependencies"
@@ -183,6 +184,7 @@ end
 MACROS_UNDEF.add_undefined_macros(head, defs, inactive_defs, calls, verbose)
 MACROS_PARAM.get_macros_param_info(in_files, defs)
 MACROS_PROCESS.process_macro_calls(defs, calls_out, verbose)
+MACROS_AVOID.check_for_macros_to_avoid(defs, inactive_defs, calls, verbose)
 
 MSG.debug_time_and_gc(DEBUG)
 

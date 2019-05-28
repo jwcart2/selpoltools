@@ -1485,7 +1485,7 @@ local function parse_m4_define_block(state, kind, cur, node, parse_func)
    local decls = {}
    state.used = used
    state.decls = decls
-   MACRO.set_def_data(node, name, false, false, decls, used, false, false)
+   MACRO.set_def_data(node, name, false, false, decls, used, false, false, false)
    local notallowed = {file=true, policy_module=true, module=true, template=true,
 		       interface=true, common=true, class=true}
    local block = parse_func(state, node, notallowed, "'")
@@ -1512,7 +1512,7 @@ local function parse_m4_macro_block(state, kind, cur, node, parse_func)
    local decls = {}
    state.used = used
    state.decls = decls
-   MACRO.set_def_data(node, name, false, false, decls, used, false, false)
+   MACRO.set_def_data(node, name, false, false, decls, used, false, false, false)
    local notallowed = {file=true, policy_module=true, module=true, template=true,
 		       interface=true, common=true, class=true}
    local block = parse_func(state, node, notallowed, "'")
@@ -1614,6 +1614,42 @@ local function parse_require_block(state, kind, cur, node)
    return cur
 end
 
+local function parse_refpolicywarn(state, kind, cur, node)
+   local macro = node
+   while macro and NODE.get_kind(macro) ~= "macro" do
+      macro = NODE.get_parent(macro)
+   end
+   if not macro then
+      return skip_block(state, kind, cur, node)
+   end
+
+   local node_flags = MACRO.get_def_flags(macro)
+
+   get_expected(state,"(")
+   get_expected(state,"`")
+   local t = lex_get(state.lex)
+   local found = false
+   while t ~= "'" do
+      if t == "deprecated" or t == "deprecated." or t == "replaced" then
+	 node_flags[1] = true
+	 found = true
+      elseif t == "implemented" then
+	 node_flags[2] = true
+	 found = true
+      end
+      t = lex_get(state.lex)
+   end
+   get_expected(state,")")
+
+   if not found then
+      TREE.warning("Could not figure out refpolicywarn", node)
+   end
+
+   MACRO.set_def_flags(macro, node_flags)
+
+   return cur
+end
+
 -------------------------------------------------------------------------------
 local rules = {
    ["policycap"] = parse_policycap_rule,
@@ -1672,7 +1708,7 @@ local rules = {
    ["gen_require"] = parse_require_block,
    ["require"] = parse_require_block,
    ["undefine"] = skip_block,
-   ["refpolicywarn"] = skip_block,
+   ["refpolicywarn"] = parse_refpolicywarn,
 }
 
 local blocks = {
