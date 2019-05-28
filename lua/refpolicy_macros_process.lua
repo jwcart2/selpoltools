@@ -86,6 +86,7 @@ end
 local function get_flavors_and_args_from_used(used)
    local args = {}
    local flavors = {}
+   local compound = {}
    local max_arg = 0
    for flavor, toktab in pairs(used) do
       for tok,_ in pairs(toktab) do
@@ -101,6 +102,7 @@ local function get_flavors_and_args_from_used(used)
 	       add_to_tab(flavors, n, flavor)
 	    else
 	       -- Compound parameter: $1_t, foo_$1_bar_$2_t, etc
+	       add_to_tab(compound, tok, flavor)
 	       for num in string.gmatch(tok, "%$(%d+)") do
 		  local n = tonumber(num)
 		  if n > max_arg then
@@ -112,7 +114,7 @@ local function get_flavors_and_args_from_used(used)
 	 end
       end
    end
-   return flavors, args, max_arg
+   return flavors, args, max_arg, compound
 end
 
 local function report_and_fix_parameter_holes(flavors, max, name, node, verbose)
@@ -147,12 +149,14 @@ local function prepare_ready_defs(defs, def_calls, call_defs, verbose)
 	 if used["type"] and used["type"]["self"] then
 	    used["type"]["self"] = nil
 	 end
-	 local orig_flavors, exp_args, max_arg = get_flavors_and_args_from_used(used)
+	 local orig_flavors, exp_args, max_arg, cmpd_args
+	    = get_flavors_and_args_from_used(used)
 	 if #orig_flavors ~= max_arg then
 	    report_and_fix_parameter_holes(orig_flavors, max_arg, name, def, verbose)
 	 end
 	 MACRO.set_def_orig_flavors(def, orig_flavors)
 	 MACRO.set_def_exp_args(def, exp_args)
+	 MACRO.set_def_compound_args(def, cmpd_args)
 	 if call_defs[name] then
 	    ready[name] = def
 	 else

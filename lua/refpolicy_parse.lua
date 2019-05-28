@@ -1502,7 +1502,7 @@ local function parse_m4_define_block(state, kind, cur, node, parse_func)
    local decls = {}
    state.used = used
    state.decls = decls
-   MACRO.set_def_data(node, name, false, false, decls, used, false, false, false)
+   MACRO.set_def_data(node, name, false, false, false, decls, used, false, false, false)
    local notallowed = {file=true, policy_module=true, module=true, template=true,
 		       interface=true, common=true, class=true}
    local block = parse_func(state, node, notallowed, "'")
@@ -1529,7 +1529,7 @@ local function parse_m4_macro_block(state, kind, cur, node, parse_func)
    local decls = {}
    state.used = used
    state.decls = decls
-   MACRO.set_def_data(node, name, false, false, decls, used, false, false, false)
+   MACRO.set_def_data(node, name, false, false, false, decls, used, false, false, false)
    local notallowed = {file=true, policy_module=true, module=true, template=true,
 		       interface=true, common=true, class=true}
    local block = parse_func(state, node, notallowed, "'")

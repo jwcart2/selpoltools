@@ -15,11 +15,12 @@ local node_set_data = NODE.set_data
 -- 1 - Name
 -- 2 - Orig Flavors (Flavors of $1, $2, $3, etc, but not compound)
 -- 3 - Expanded Args
--- 4 - Declarations
--- 5 - Used
--- 6 - Requires
--- 7 - Param info ({# optional params, # unusd params})
--- 8 - Flags ({Deprecated, Future, ...})
+-- 4 - Compound Args ($1_t, $1_foo_$2_t, etc)
+-- 5 - Declarations
+-- 6 - Used
+-- 7 - Requires
+-- 8 - Param info ({# optional params, # unusd params})
+-- 9 - Flags ({Deprecated, Future, ...})
 ---------------------------------------------------
 
 local function get_def_name(def)
@@ -34,7 +35,7 @@ local function set_def_name(def, name)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def, {name, false, false, false, false, false, false, false})
+      node_set_data(def, {name, false, false, false, false, false, false, false, false})
    else
       data[1] = name
    end
@@ -53,7 +54,8 @@ local function set_def_orig_flavors(def, flavors)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def, {false, flavors, false, false, false, false, false, false})
+      node_set_data(def, {false, flavors, false, false, false, false, false, false,
+			  false})
    else
       data[2] = flavors
    end
@@ -72,16 +74,36 @@ local function set_def_exp_args(def, args)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def, {false, false, args, false, false, false, false, false})
+      node_set_data(def, {false, false, args, false, false, false, false, false, false})
    else
       data[3] = args
    end
 end
 node_macro.set_def_exp_args = set_def_exp_args
 
-local function get_def_decls(def)
+local function get_def_compound_args(def)
    local data = node_get_data(def)
    return data and data[4]
+end
+node_macro.get_def_compound_args = get_def_compound_args
+
+local function set_def_compound_args(def, cmpd_args)
+   if not def or not cmpd_args then
+      return
+   end
+   local data = node_get_data(def)
+   if not data then
+      node_set_data(def, {false, false, false, cmpd_args, false, false, false, false,
+			  false})
+   else
+      data[4] = cmpd_args
+   end
+end
+node_macro.set_def_compound_args = set_def_compound_args
+
+local function get_def_decls(def)
+   local data = node_get_data(def)
+   return data and data[5]
 end
 node_macro.get_def_decls = get_def_decls
 
@@ -91,16 +113,16 @@ local function set_def_decls(def, decls)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def, {false, false, false, decls, false, false, false, false})
+      node_set_data(def, {false, false, false, false, decls, false, false, false, false})
    else
-      data[4] = decls
+      data[5] = decls
    end
 end
 node_macro.set_def_decls = set_def_decls
 
 local function get_def_used(def)
    local data = node_get_data(def)
-   return data and data[5]
+   return data and data[6]
 end
 node_macro.get_def_used = get_def_used
 
@@ -110,16 +132,16 @@ local function set_def_used(def, used)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def, {false, false, false, false, used, false, false, false})
+      node_set_data(def, {false, false, false, false, false, used, false, false, false})
    else
-      data[5] = used
+      data[6] = used
    end
 end
 node_macro.set_def_used = set_def_used
 
 local function get_def_requires(def)
    local data = node_get_data(def)
-   return data and data[6]
+   return data and data[7]
 end
 node_macro.get_def_requires = get_def_requires
 
@@ -129,16 +151,17 @@ local function set_def_requires(def, requires)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def,{false, false, false, false, false, requires, false, false})
+      node_set_data(def,{false, false, false, false, false, false, requires, false,
+			 false})
    else
-      data[6] = requires
+      data[7] = requires
    end
 end
 node_macro.set_def_requires = set_def_requires
 
 local function get_def_param_info(def)
    local data = node_get_data(def)
-   return data and data[7]
+   return data and data[8]
 end
 node_macro.get_def_param_info = get_def_param_info
 
@@ -148,16 +171,17 @@ local function set_def_param_info(def, param_info)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def,{false, false, false, false, false, false, param_info, false})
+      node_set_data(def,{false, false, false, false, false, false, false, param_info,
+			 false})
    else
-      data[7] = param_info
+      data[8] = param_info
    end
 end
 node_macro.set_def_param_info = set_def_param_info
 
 local function get_def_flags(def)
    local data = node_get_data(def)
-   return data and data[8]
+   return data and data[9]
 end
 node_macro.get_def_flags = get_def_flags
 
@@ -167,24 +191,25 @@ local function set_def_flags(def, flags)
    end
    local data = node_get_data(def)
    if not data then
-      node_set_data(def,{false, false, false, false, false, false, false, flags})
+      node_set_data(def,{false, false, false, false, false, false, false, false, flags})
    else
-      data[8] = flags
+      data[9] = flags
    end
 end
 node_macro.set_def_flags = set_def_flags
 
-local function set_def_data(def, name, orig_flavors, exp_args, decls, used, requires,
-			    param_info, flags)
+local function set_def_data(def, name, orig_flavors, exp_args, cmpd_args, decls, used,
+			    requires, param_info, flags)
    orig_flavors = orig_flavors or false
    exp_args = exp_args or false
+   cmpd_args = cmpd_args or false
    decls = decls or false
    used = used or false
    requires = requires or false
    param_info = param_info or {0,0}
    flags = flags or {false, false}
-   node_set_data(def, {name, orig_flavors, exp_args, decls, used, requires, param_info,
-		       flags})
+   node_set_data(def, {name, orig_flavors, exp_args, cmpd_args, decls, used, requires,
+		       param_info, flags})
 end
 node_macro.set_def_data = set_def_data
 
