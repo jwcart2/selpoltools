@@ -122,6 +122,15 @@ local function add_to_used(state, value, flavor)
    end
 end
 
+local function get_optional(state, expected)
+    local token = lex_peek(state.lex)
+    if token == expected then
+        lex_get(state.lex)
+    end
+
+    return token == expected
+end
+
 local function get_expected(state, expected)
    local token = lex_get(state.lex)
    if token ~= expected then
@@ -643,7 +652,9 @@ local function parse_gen_tunable_rule(state, kind, cur, node)
    node_set_kind(node, "tunable")
    tree_add_node(cur, node)
    get_expected(state, "(")
+   get_optional(state, "`")
    local tunable = get_declaration(state, "tunable")
+   get_optional(state, "'")
    get_expected(state, ",")
    local bool_val = get_boolean(state)
    get_expected(state, ")")
