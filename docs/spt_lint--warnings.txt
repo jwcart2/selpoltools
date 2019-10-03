@@ -240,3 +240,4 @@ DETAILED LIST OF WARNING
 	 - Identifier declared more than once in the same module.
 	 - Base modules needed by other base modules
 	 - Base modules needed by non-base modules
+	 - Use of quotes in gen_tunable() block. They are not needed, but seem to work

@@ -652,8 +652,23 @@ local function parse_gen_tunable_rule(state, kind, cur, node)
    node_set_kind(node, "tunable")
    tree_add_node(cur, node)
    get_expected(state, "(")
-   get_optional(state, "`")
+   local token = lex_peek(state.lex)
+   local quoted = token == "`" or token == "\""
+   if quoted then
+      if state.verbose > 2 then
+	 -- Quoting is not required or desired, but works with m4
+	 warning_message(state, "Quoting the tunable name is not required", 3)
+      end
+      lex_next(state.lex)
+   end
    local tunable = get_declaration(state, "tunable")
+   if quoted then
+      if token == "`" then
+	 get_expected(state, "'")
+      elseif token == "\"" then
+	 get_expected(state, "\"")
+      end
+   end
    get_optional(state, "'")
    get_expected(state, ",")
    local bool_val = get_boolean(state)
