@@ -4,7 +4,6 @@ local MACRO = require "node_macro"
 local IFDEF = require "node_ifdef"
 local TREE = require "tree"
 local LEX = require "common_lex"
-local REF_SETS = require "refpolicy_get_class_perm_sets"
 local MLS = require "refpolicy_mls"
 
 local refpolicy_parse = {}
@@ -73,29 +72,6 @@ local function copy_data(old)
 	 end
       end
       return new
-   end
-end
-
-local function expand_set_list(list, sets)
-   local i = 1
-   local last = #list
-   while i <= last do
-      local e = list[i]
-      if type(e) ~= "table" then
-	 if sets[e] then
-	    table.remove(list, i)
-	    for j=1,#sets[e] do
-	       table.insert(list, i, sets[e][j])
-	       i = i + 1
-	    end
-	    last = #list
-	 else
-	    i = i + 1
-	 end
-      else
-	 expand_set_list(e, sets)
-	 i = i + 1
-      end
    end
 end
 
@@ -266,29 +242,11 @@ local function get_set(state, flavor)
 end
 
 local function get_class(state)
-   local class_set = get_identifier_or_set(state, "class")
-   if type(class_set) ~= "table" then
-      if not state.class_sets[class_set] then
-	 return class_set
-      else
-	 class_set = {class_set}
-      end
-   end
-   expand_set_list(class_set, state.class_sets)
-   return class_set
+   return get_identifier_or_set(state, "class")
 end
 
 local function get_perms(state)
-   local perm_set = get_identifier_or_set(state, "perm")
-   if type(perm_set) ~= "table" then
-      if not state.perm_sets[perm_set] then
-	 return perm_set
-      else
-	 perm_set = {perm_set}
-      end
-   end
-   expand_set_list(perm_set, state.perm_sets)
-   return perm_set
+   return get_identifier_or_set(state, "perm")
 end
 
 local function get_def_perms(state)
@@ -583,9 +541,9 @@ function get_constraint_expr(state, mls, mlstrans)
 	 cstr[#cstr+1] = op
       end
       token = lex_peek(state.lex)
-      if state.defs[token] then
+      if token == "basic_ubac_conditions" then
 	 lex_next(state.lex)
-	 expr = copy_data(state.defs[token])
+	 expr = token
       else
 	 expr = get_cstr_expr(state, mls, mlstrans)
       end
@@ -596,19 +554,6 @@ function get_constraint_expr(state, mls, mlstrans)
       cstr =  cstr[1]
    end
    return cstr
-end
-
-local function parse_basic_ubac_conditions(state)
-   get_expected(state, "ifdef")
-   get_expected(state, "(")
-   get_expected(state, "`")
-   get_expected(state, "enable_ubac")
-   get_expected(state, "'")
-   get_expected(state, ",")
-   get_expected(state, "`")
-   state.defs["basic_ubac_conditions"] = get_constraint_expr(state, false, false)
-   get_expected(state, "'")
-   get_expected(state, ")")
 end
 
 --------------------------------------------------------------------------------
@@ -995,8 +940,8 @@ end
 local function get_sens_or_cat_number(state)
    local tok = lex_get(state.lex)
    local num
-   if state.defs[tok] then
-      num = state.defs[tok]
+   if state.cdefs[tok] then
+      num = state.cdefs[tok]
    else
       num = tonumber(tok)
    end
@@ -1454,6 +1399,45 @@ local function parse_m4_ifelse_block(state, kind, cur, node, parse_func)
    return cur
 end
 
+local function parse_obj_perm_set(state)
+   get_expected(state, "{")
+   local list = {}
+   local token = lex_get(state.lex)
+   while token ~= "}" and token ~= lex_END do
+      list [#list+1] = token
+      token = lex_get(state.lex)
+   end
+   if lex_peek(state.lex) == "refpolicywarn" then
+      lex_next(state.lex)
+      get_expected(state, "(")
+      get_expected(state, "`")
+      while lex_peek(state.lex) ~= "'" do
+	 lex_next(state.lex)
+      end
+      get_expected(state, "'")
+      get_expected(state, ")")
+   end
+   get_expected(state, "'")
+   get_expected(state, ")")
+   return list
+end
+
+local function parse_basic_ubac_conditions(state)
+   get_expected(state, "ifdef")
+   get_expected(state, "(")
+   get_expected(state, "`")
+   get_expected(state, "enable_ubac")
+   get_expected(state, "'")
+   get_expected(state, ",")
+   get_expected(state, "`")
+   local expr = get_constraint_expr(state, false, false)
+   get_expected(state, "'")
+   get_expected(state, ")")
+   get_expected(state, "'")
+   get_expected(state, ")")
+   return expr
+end
+
 local function parse_m4_define_block(state, kind, cur, node, parse_func)
    get_expected(state, "(")
    get_expected(state, "`")
@@ -1484,11 +1468,18 @@ local function parse_m4_define_block(state, kind, cur, node, parse_func)
 	 skip_block_common(state, ")")
 	 return cur
       end
+   elseif string.find(file,"obj_perm_sets.spt",1,true) then
+      local list = parse_obj_perm_set(state)
+      node_set_kind(node, "def")
+      node_set_data(node, {name, list})
+      tree_add_node(cur, node)
+      return node
    elseif name == "basic_ubac_conditions" then
-      parse_basic_ubac_conditions(state)
-      get_expected(state, "'")
-      get_expected(state, ")")
-      return cur
+      local expr = parse_basic_ubac_conditions(state)
+      node_set_kind(node, "def")
+      node_set_data(node, {name, expr})
+      tree_add_node(cur, node)
+      return node
    elseif lex_peek(state.lex) == "{" then
       -- All of these should be handled elswhere
       error_message(state, "Did not expect to find a def_set")
@@ -1563,7 +1554,6 @@ local function parse_m4_module_block(state, kind, cur, node, parse_func)
    NODE.set_block(node, block)
    return node
 end
-
 
 local function parse_require_block(state, kind, cur, node)
    -- role, type, attribute, attributerole, user, bool, tunable, sensitivity, category
@@ -1836,15 +1826,12 @@ end
 
 -------------------------------------------------------------------------------	 
 local function parse_refpolicy_policy(active_files, inactive_files,
-				      head, defs, tunables, verbose)
+				      head, cdefs, tunables, verbose)
    MSG.verbose_out("\nParse Refpolicy Policy", verbose, 0)
-
-   local class_sets, perm_sets = REF_SETS.get_class_perm_sets(active_files)
 
    local lex_state = LEX.create(active_files, 4)
    local state = {verbose=verbose, lex=lex_state, rules=rules, blocks=blocks,
-		  defs=defs, tunables=tunables,
-		  class_sets=class_sets, perm_sets=perm_sets}
+		  cdefs=cdefs, tunables=tunables}
 
    local block1 = parse_files(state, head)
    TREE.set_active(head, block1)

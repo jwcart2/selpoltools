@@ -31,6 +31,9 @@ local REFPOL_PARSE = require "refpolicy_parse"
 local CHECK_REQ = require "refpolicy_check_requires"
 local CHECK_STATE = require "refpolicy_check_statements"
 
+local DEFS_COLLECT = require "refpolicy_defs_collect"
+local DEFS_PROCESS = require "refpolicy_defs_process"
+
 local MACROS_COLLECT = require "refpolicy_macros_collect"
 local MACROS_CHECK = require "refpolicy_macros_check"
 local MACROS_PARAM = require "refpolicy_macros_param_info"
@@ -166,6 +169,9 @@ REFPOL_PARSE.parse_refpolicy_policy(in_files, inactive_files, head, cdefs, tunab
 				    verbose)
 
 MSG.debug_time_and_gc(DEBUG)
+
+local defs = DEFS_COLLECT.collect_defs(head, verbose)
+DEFS_PROCESS.process_defs(head, verbose, defs)
 
 TREE.disable_inactive(head)
 
