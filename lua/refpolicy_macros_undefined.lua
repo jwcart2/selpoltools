@@ -12,7 +12,7 @@ local function get_last_node(head)
 end
 
 -------------------------------------------------------------------------------
-local function find_and_add_undefined_macros(defs, inactive_defs, calls, file_parent,
+local function find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, file_parent,
 					     verbose)
    local file_name = "File Added for Undefined Macros"
    local lineno = 0 -- It's generated, so just leave at 0
@@ -21,11 +21,11 @@ local function find_and_add_undefined_macros(defs, inactive_defs, calls, file_pa
    local top = NODE.create(false, false, false, false)
    local cur = top
    for name, call_list in pairs(calls) do
-      if not defs[name] and not inactive_defs[name] then
+      if not mdefs[name] and not inactive_mdefs[name] then
 	 MSG.verbose_out("Creating macro definition for "..tostring(name).."()",
 			 verbose, 1)
-	 local def = NODE.create("macro", file_node, file_name, lineno)
-	 defs[name] = def
+	 local mdef = NODE.create("macro", file_node, file_name, lineno)
+	 mdefs[name] = mdef
 	 local num_args = -1
 	 for _,call in pairs(call_list) do
 	    local args = MACRO.get_call_orig_args(call)
@@ -42,9 +42,9 @@ local function find_and_add_undefined_macros(defs, inactive_defs, calls, file_pa
 	 -- Really don't want warnings about too many or too few params
 	 local optional = 1
 	 local unused = 1
-	 MACRO.set_def_data(def, name, false, false, false, {}, used, false,
+	 MACRO.set_def_data(mdef, name, false, false, false, {}, used, false,
 			    {optional, unused}, false)
-	 cur = TREE.add_node(cur, def)
+	 cur = TREE.add_node(cur, mdef)
       end
    end
    if TREE.next_node(top) then
@@ -54,10 +54,10 @@ local function find_and_add_undefined_macros(defs, inactive_defs, calls, file_pa
 end
 
 -------------------------------------------------------------------------------
-local function add_undefined_macros(head, defs, inactive_defs, calls, verbose)
+local function add_undefined_macros(head, mdefs, inactive_mdefs, calls, verbose)
    MSG.verbose_out("\nAdd undefined macros", verbose, 0)
 
-   local undefined = find_and_add_undefined_macros(defs, inactive_defs, calls, head,
+   local undefined = find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, head,
 						   verbose)
    local last = get_last_node(head)
    TREE.add_node(last, undefined)

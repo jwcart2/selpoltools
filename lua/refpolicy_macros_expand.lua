@@ -67,7 +67,7 @@ end
 
 local expand_call_inside_macro
 
-local function copy_and_expand_node(old, cur, parent, args, defs)
+local function copy_and_expand_node(old, cur, parent, args, mdefs)
    cur = cur or false
    parent = parent or false
    local kind = NODE.get_kind(old) or false
@@ -79,27 +79,27 @@ local function copy_and_expand_node(old, cur, parent, args, defs)
    NODE.set_next(cur, new)
    if kind == "call" then
       local name = MACRO.get_call_name(new)
-      if defs[name] then
-	 expand_call_inside_macro(new, defs[name], defs, args)
+      if mdefs[name] then
+	 expand_call_inside_macro(new, mdefs[name], mdefs, args)
       end
    end
    return new
 end
 
-local function copy_and_expand_block(old, parent, args, defs)
+local function copy_and_expand_block(old, parent, args, mdefs)
    local start = false
    local cur
    while old do
-      cur = copy_and_expand_node(old, cur, parent, args, defs)
+      cur = copy_and_expand_node(old, cur, parent, args, mdefs)
       if NODE.has_block(old) then
 	 local old1 = NODE.get_block_1(old)
 	 local old2 = NODE.get_block_2(old)
 	 if old1 then
-	    local block1 = copy_and_expand_block(old1, cur, args, defs)
+	    local block1 = copy_and_expand_block(old1, cur, args, mdefs)
 	    NODE.set_block_1(cur, block1)
 	 end
 	 if old2 then
-	    local block2 = copy_and_expand_block(old2, cur, args, defs)
+	    local block2 = copy_and_expand_block(old2, cur, args, mdefs)
 	    NODE.set_block_2(cur, block2)
 	 end
       end
@@ -109,32 +109,32 @@ local function copy_and_expand_block(old, parent, args, defs)
    return start
 end
 
-function expand_call_inside_macro(call, macro, defs, args)
+function expand_call_inside_macro(call, macro, mdefs, args)
    local orig_args = MACRO.get_call_orig_args(call)
    local call_exp_args_old = MACRO.get_call_exp_args(call)
    local trans_tab = create_trans_table(orig_args)
    local call_exp_args_new = create_call_exp_args(call_exp_args_old, trans_tab)
    local macro_block = NODE.get_block(macro)
-   local block = copy_and_expand_block(macro_block, call, call_exp_args_new, defs)
+   local block = copy_and_expand_block(macro_block, call, call_exp_args_new, mdefs)
    NODE.set_block(call, block)
 end
 
-local function expand_call_outside_macro(call, macro, defs)
+local function expand_call_outside_macro(call, macro, mdefs)
    local args = MACRO.get_call_exp_args(call)
    local macro_block = NODE.get_block(macro)
-   local block = copy_and_expand_block(macro_block, call, args, defs)
+   local block = copy_and_expand_block(macro_block, call, args, mdefs)
    NODE.set_block(call, block)
 end
 
 -------------------------------------------------------------------------------
-local function expand_macros(defs, calls_out, verbose)
+local function expand_macros(mdefs, calls_out, verbose)
    MSG.verbose_out("\nExpand macro calls", verbose, 0)
 
    for name, call_list in pairs(calls_out) do
-      if defs[name] then
+      if mdefs[name] then
 	 for _, call in pairs(call_list) do
 	    if not NODE.has_block(call) then
-	       expand_call_outside_macro(call, defs[name], defs)
+	       expand_call_outside_macro(call, mdefs[name], mdefs)
 	    end
 	 end
       end

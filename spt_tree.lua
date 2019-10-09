@@ -100,13 +100,11 @@ while arg[i] and string.sub(arg[i],1,1) == "-" do
    end
 end
 
-local defs, tunables, complete_policy
+local cdefs, tunables, complete_policy
 
 if not path then
    complete_policy = false
    in_files = {}
-   defs = {}
-   tunables = {}
    modules = {}
    while i <= #arg do
       in_files[#in_files+1] = arg[i]
@@ -146,7 +144,7 @@ else
       in_files = all_files
       inactive_files = {}
    end
-   defs, tunables = REFPOL_GET_CONFIG.get_build_options(path)
+   cdefs, tunables = REFPOL_GET_CONFIG.get_build_options(path)
 end
 
 if not next(in_files) then
@@ -159,7 +157,7 @@ end
 local head = NODE.create("policy", false, false, false)
 -- For policy is that is in turned off modules
 
-REFPOL_PARSE.parse_refpolicy_policy(in_files, inactive_files, head, defs, tunables,
+REFPOL_PARSE.parse_refpolicy_policy(in_files, inactive_files, head, cdefs, tunables,
 				    verbose)
 
 MSG.debug_time_and_gc(DEBUG)
@@ -172,16 +170,17 @@ if not complete_policy then
    TREE.add_node(last, file_node)
 end
 
-local defs, calls, calls_out, inactive_defs = MACROS_COLLECT.collect_macros(head, verbose)
+local mdefs, calls, calls_out, inactive_mdefs = MACROS_COLLECT.collect_macros(head,
+									      verbose)
 if complete_policy then
-   MACROS_CHECK.check_macros(defs, inactive_defs, calls, verbose)
+   MACROS_CHECK.check_macros(mdefs, inactive_mdefs, calls, verbose)
 end
-MACROS_PARAM.get_macros_param_info(in_files, defs)
-MACROS_PROCESS.process_macro_calls(defs, calls_out, verbose)
+MACROS_PARAM.get_macros_param_info(in_files, mdefs)
+MACROS_PROCESS.process_macro_calls(mdefs, calls_out, verbose)
 
 MSG.debug_time_and_gc(DEBUG)
 
-MACROS_EXPAND.expand_macros(defs, calls_out, verbose, debug)
+MACROS_EXPAND.expand_macros(mdefs, calls_out, verbose, debug)
 
 MSG.debug_time_and_gc(DEBUG)
 

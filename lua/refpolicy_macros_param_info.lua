@@ -8,7 +8,7 @@ local refpolicy_macros_param_info = {}
 local string_find = string.find
 
 -------------------------------------------------------------------------------
-local function get_param_info_from_file(file, defs)
+local function get_param_info_from_file(file, mdefs)
    local f = io.open(file)
    if not f then
       file = file or "(nil)"
@@ -36,8 +36,8 @@ local function get_param_info_from_file(file, defs)
 	    if not name then
 	       s,e,name = string_find(l, "^template%(`([^']+)")
 	    end
-	    if name and defs[name] then
-	       MACRO.set_def_param_info(defs[name], {optional, unused})
+	    if name and mdefs[name] then
+	       MACRO.set_def_param_info(mdefs[name], {optional, unused})
 	    end
 	 end
 	 optional = 0
@@ -47,11 +47,11 @@ local function get_param_info_from_file(file, defs)
 end
 
 -------------------------------------------------------------------------------
-local function get_macros_param_info(active_files, defs)
+local function get_macros_param_info(active_files, mdefs)
    for _,file in pairs(active_files) do
       local _,_,ext = string_find(file,"%.(%a%a)$")
       if ext == "if" then
-	 get_param_info_from_file(file, defs)
+	 get_param_info_from_file(file, mdefs)
       end
    end	 
 end

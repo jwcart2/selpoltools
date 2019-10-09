@@ -20,8 +20,8 @@ local function add_macro_call_inside(node, kind, do_action, do_block, data)
    data.calls[name] = data.calls[name] or {}
    local n = #data.calls[name]
    data.calls[name][n+1] = node
-   data.defs[name] = data.defs[name] or {}
-   data.defs[name][data.name] = data.node
+   data.mdefs[name] = data.mdefs[name] or {}
+   data.mdefs[name][data.name] = data.node
 end
 
 local function add_macro_def(macro, def_calls, call_defs)
@@ -31,16 +31,16 @@ local function add_macro_def(macro, def_calls, call_defs)
    local name = MACRO.get_def_name(macro)
    def_calls[name] = {}
    local def_data = {name=name, node=macro, calls=def_calls[name],
-		     defs=call_defs}
+		     mdefs=call_defs}
    local block = NODE.get_block(macro)
    TREE.walk_tree(block, call_action, nil, def_data)
 end
 
-local function create_def_and_call_tables(defs)
+local function create_def_and_call_tables(mdefs)
    local def_calls = {}
    local call_defs = {}
-   for _,def in pairs(defs) do
-      add_macro_def(def, def_calls, call_defs)
+   for _,mdef in pairs(mdefs) do
+      add_macro_def(mdef, def_calls, call_defs)
    end
    return def_calls, call_defs
 end
@@ -136,29 +136,29 @@ local function report_and_fix_parameter_holes(flavors, max, name, node, verbose)
    end
 end
 
-local function prepare_ready_defs(defs, def_calls, call_defs, verbose)
+local function prepare_ready_defs(mdefs, def_calls, call_defs, verbose)
    local ready = {}
    for name, calltab in pairs(def_calls) do
       if not next(calltab) then
-	 local def = defs[name]
-	 if not def then
+	 local mdef = mdefs[name]
+	 if not mdef then
 	    TREE.warning1(verbose, "No macro def for "..tostring(name), nil)
 	 end
-	 local used = MACRO.get_def_used(def)
-	 local decls = MACRO.get_def_decls(def)
+	 local used = MACRO.get_def_used(mdef)
+	 local decls = MACRO.get_def_decls(mdef)
 	 if used["type"] and used["type"]["self"] then
 	    used["type"]["self"] = nil
 	 end
 	 local orig_flavors, exp_args, max_arg, cmpd_args
 	    = get_flavors_and_args_from_used(used)
 	 if #orig_flavors ~= max_arg then
-	    report_and_fix_parameter_holes(orig_flavors, max_arg, name, def, verbose)
+	    report_and_fix_parameter_holes(orig_flavors, max_arg, name, mdef, verbose)
 	 end
-	 MACRO.set_def_orig_flavors(def, orig_flavors)
-	 MACRO.set_def_exp_args(def, exp_args)
-	 MACRO.set_def_compound_args(def, cmpd_args)
+	 MACRO.set_def_orig_flavors(mdef, orig_flavors)
+	 MACRO.set_def_exp_args(mdef, exp_args)
+	 MACRO.set_def_compound_args(mdef, cmpd_args)
 	 if call_defs[name] then
-	    ready[name] = def
+	    ready[name] = mdef
 	 else
 	    def_calls[name] = nil
 	 end
@@ -343,23 +343,23 @@ local function process_defs(ready, def_calls, call_defs, verbose)
 end
 
 -------------------------------------------------------------------------------
-local function process_calls_outside(calls, defs, verbose)
+local function process_calls_outside(calls, mdefs, verbose)
    for name, call_list in pairs(calls) do
-      if not defs[name] then
+      if not mdefs[name] then
 	 for _,call in pairs(call_list) do
 	    MACRO.set_call_decls(call, {})
 	    MACRO.set_call_exp_args(call, {})
 	 end
       else
-	 local def = defs[name]
-	 local orig_flavors = MACRO.get_def_orig_flavors(def)
-	 local def_decls = MACRO.get_def_decls(def)
-	 local def_exp_args = MACRO.get_def_exp_args(def)
+	 local mdef = mdefs[name]
+	 local orig_flavors = MACRO.get_def_orig_flavors(mdef)
+	 local def_decls = MACRO.get_def_decls(mdef)
+	 local def_exp_args = MACRO.get_def_exp_args(mdef)
 	 for _,call in pairs(call_list) do
 	    local orig_args = MACRO.get_call_orig_args(call)
 	    if #orig_args ~= #orig_flavors then
 	       report_wrong_number_of_args(orig_args, orig_flavors, name, call,
-					   def, verbose)
+					   mdef, verbose)
 	    end
 	    local trans_tab = create_trans_table(orig_args)
 	    local call_decls = create_call_decls(def_decls, trans_tab)
@@ -372,12 +372,12 @@ local function process_calls_outside(calls, defs, verbose)
 end
 
 -------------------------------------------------------------------------------
-local function process_macro_calls(defs, calls_out, verbose)
+local function process_macro_calls(mdefs, calls_out, verbose)
    MSG.verbose_out("\nProcess macro calls", verbose, 0)
 
-   local def_calls, call_defs = create_def_and_call_tables(defs)
+   local def_calls, call_defs = create_def_and_call_tables(mdefs)
    while next(def_calls) do
-      local ready = prepare_ready_defs(defs, def_calls, call_defs, verbose)
+      local ready = prepare_ready_defs(mdefs, def_calls, call_defs, verbose)
       process_defs(ready, def_calls, call_defs, verbose)
       if not next(ready) and next(def_calls) then
 	 MSG.warning("Unable to process any more macros")
@@ -388,7 +388,7 @@ local function process_macro_calls(defs, calls_out, verbose)
       end
    end
 
-   process_calls_outside(calls_out, defs, verbose)
+   process_calls_outside(calls_out, mdefs, verbose)
 end
 refpolicy_macros_process.process_macro_calls = process_macro_calls
 

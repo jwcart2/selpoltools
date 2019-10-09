@@ -17,10 +17,10 @@ local function in_optional(node)
    return false
 end
 
-local function check_for_undefined_calls(defs, inactive_defs, calls, verbose)
+local function check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose)
    for name, call_list in pairs(calls) do
-      if not defs[name] then 
-	 if not inactive_defs[name] then
+      if not mdefs[name] then
+	 if not inactive_mdefs[name] then
 	    TREE.warning("No macro definition for "..tostring(name).."()", nil)
 	    if verbose > 0 then
 	       for _,call in pairs(call_list) do
@@ -49,10 +49,10 @@ local function check_for_undefined_calls(defs, inactive_defs, calls, verbose)
 end
 
 -------------------------------------------------------------------------------
-local function check_macros(defs, inactive_defs, calls, verbose)
+local function check_macros(mdefs, inactive_mdefs, calls, verbose)
    MSG.verbose_out("\nCheck macros", verbose, 0)
 
-   check_for_undefined_calls(defs, inactive_defs, calls, verbose)
+   check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose)
 end
 refpolicy_macros_check.check_macros = check_macros
 

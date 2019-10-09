@@ -5,9 +5,9 @@ local TREE = require "tree"
 local refpolicy_macros_avoid = {}
 
 -------------------------------------------------------------------------------
-local function check_calls(defs, inactive_defs, calls, verbose)
+local function check_calls(mdefs, inactive_mdefs, calls, verbose)
    for name, call_list in pairs(calls) do
-      local macro_def = defs[name] or inactive_defs[name]
+      local macro_def = mdefs[name] or inactive_mdefs[name]
       if macro_def then
 	 local flags = MACRO.get_def_flags(macro_def)
 	 if type(flags) == "table" then
@@ -25,10 +25,10 @@ local function check_calls(defs, inactive_defs, calls, verbose)
 end
 
 -------------------------------------------------------------------------------
-local function check_for_macros_to_avoid(defs, inactive_defs, calls, verbose)
+local function check_for_macros_to_avoid(mdefs, inactive_mdefs, calls, verbose)
    MSG.verbose_out("\nCheck for deprecated or unimplemented macros", verbose, 0)
    if verbose >= 1 then
-      check_calls(defs, inactive_defs, calls, verbose)
+      check_calls(mdefs, inactive_mdefs, calls, verbose)
    end
 end
 refpolicy_macros_avoid.check_for_macros_to_avoid = check_for_macros_to_avoid
