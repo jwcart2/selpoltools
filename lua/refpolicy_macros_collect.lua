@@ -93,7 +93,7 @@ local function collect_inactive_macros(head, verbose)
    --               [DEF_NAME] = def_node
    return data.mdefs
 end
-refpolicy_macros_collect.collect_inactive_macros = collect_inactive__macros
+refpolicy_macros_collect.collect_inactive_macros = collect_inactive_macros
 
 -------------------------------------------------------------------------------
 local function collect_macros(head, verbose)
