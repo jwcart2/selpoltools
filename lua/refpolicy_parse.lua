@@ -618,7 +618,7 @@ local function parse_sid_rule(state, kind, cur, node)
    lex_prev(state.lex)
    if token == lex_EOF or state.rules[token] or
    state.blocks[token] then
-      node_set_kind(node, "sid_dec")
+      node_set_kind(node, "sid_decl")
       local sid = get_declaration(state, "sid")
       node_set_data(node, {sid})
    else -- initial sid
@@ -637,7 +637,7 @@ local function parse_class_rule(state, kind, cur, node)
    lex_prev(state.lex)
    if token == lex_EOF or state.rules[token] or
    state.blocks[token] then
-      node_set_kind(node, "class_dec")
+      node_set_kind(node, "class_decl")
       local class = get_declaration(state, "class")
       node_set_data(node, {class})
    else -- class instantiation
