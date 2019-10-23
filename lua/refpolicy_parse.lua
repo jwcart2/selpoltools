@@ -512,26 +512,6 @@ local function get_cstr_leaf_expr(state, mls, mlstrans)
    return {ls, op, rs}
 end
 
-local get_constraint_expr
-local get_cstr_expr
-
-function get_cstr_expr(state, mls, mlstrans)
-   local token = lex_peek(state.lex)
-   local expr
-   if token == "not" then
-      lex_next(state.lex)
-      expr = get_cstr_expr(state, mls, mlstrans)
-      return {"not", expr}
-   elseif token == "(" then
-      lex_next(state.lex)
-      expr = get_constraint_expr(state, mls, mlstrans)
-      get_expected(state, ")")
-      return expr
-   else
-      return get_cstr_leaf_expr(state, mls, mlstrans)
-   end
-end
-
 function get_constraint_expr(state, mls, mlstrans)
    local cstr = {}
    local token, expr, op
@@ -544,13 +524,21 @@ function get_constraint_expr(state, mls, mlstrans)
       if token == "basic_ubac_conditions" then
 	 lex_next(state.lex)
 	 expr = token
-      else
+      elseif token == "not" then
+	 lex_next(state.lex)
 	 expr = get_cstr_expr(state, mls, mlstrans)
+	 expr =  {"not", expr}
+      elseif token == "(" then
+	 lex_next(state.lex)
+	 expr = get_constraint_expr(state, mls, mlstrans)
+	 get_expected(state, ")")
+      else
+	 expr = get_cstr_leaf_expr(state, mls, mlstrans)
       end
       cstr[#cstr+1] = expr
       op = lex_peek(state.lex)
    until op ~= "and" and op ~= "or"
-   if #cstr <= 1 then
+   if #cstr == 1 and type(cstr[1]) == "table" then
       cstr =  cstr[1]
    end
    return cstr
