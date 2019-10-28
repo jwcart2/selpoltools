@@ -82,7 +82,7 @@ local function create_levels(num_sens, num_cats, parent, file, lineno)
    local high_cat = "c"..tostring(num_cats-1)
    for i=1,num_sens do
       local s = "s"..tostring(i-1)
-      NODE.set_data(node, {s, {{low_cat, high_cat}}})
+      NODE.set_data(node, {{s, {{low_cat, high_cat}}}})
       last = TREE.add_node(last, node)
       node = NODE.create("level", parent, file, lineno)
    end
