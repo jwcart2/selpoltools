@@ -750,12 +750,11 @@ local function parse_user_rule(state, kind, cur, node)
       lex_next(state.lex)
       mls_range = get_mls_range(state)
    end
-   node_set_data(node, {user, roles, mls_level, mls_range, false})
+   node_set_data(node, {user, roles, mls_level, mls_range})
    return node
 end
 
 local function parse_gen_user_rule(state, kind, cur, node)
-   node_set_kind(node, "user")
    tree_add_node(cur, node)
    get_expected(state, "(")
    local user = get_declaration(state, "user")
@@ -764,7 +763,7 @@ local function parse_gen_user_rule(state, kind, cur, node)
       lex_next(state.lex) -- prefix
    end
    get_expected(state, ",")
-   local roles, mls_roles = get_gen_user_role_list(state, "role", ",", ",")
+   local roles, mls_roles = get_gen_user_role_list(state)
    local mls_level = get_mls_level(state)
    get_expected(state, ",")
    local mls_range = get_mls_range(state)
@@ -773,22 +772,47 @@ local function parse_gen_user_rule(state, kind, cur, node)
       -- Found MCS Categories
       get_expected(state, ",")
       warning_message(state, "Found MCS Categories for gen_user()", 3)
-      mcs_cats = get_mls_categories_from_string(state, lex_get(state.lex))
+      local v = tostring(lex_peek(state.lex))
+      if lex_peek(state.lex) == "mcs_allcats" then
+	 mcs_cats = "mcs_allcats"
+	 lex_next(state.lex)
+      else
+	 mcs_cats = get_mls_categories_from_string(state, lex_get(state.lex))
+      end
    end
    get_expected(state, ")")
-   if not mls_roles then
-      node_set_data(node, {user, role, mls_level, mls_range, mcs_cats})
-   else
-      node_set_kind(node, "ifdef")
-      IFDEF.set_conditional(node, {"enable_mls"})
+   if mls_level and mls_range then
+      if not mls_roles then
+	 mls_roles = roles
+      end
       local file = NODE.get_file_name(node)
       local lineno = NODE.get_line_number(node)
-      local new = node_create("user", node, file, lineno)
-      node_set_data(new, {user, mls_roles, mls_level, mls_range, false})
-      NODE.set_then_block(node, new)
-      new = node_create("user", node, file, lineno)
-      node_set_data(new, {user, roles, mls_level, mls_range, mcs_cats})
-      NODE.set_else_block(node, new)
+      node_set_kind(node, "ifdef")
+      IFDEF.set_conditional(node, {"enable_mls"})
+      local new_user = node_create("user", node, file, lineno)
+      node_set_data(new_user, {user, mls_roles, mls_level, mls_range})
+      NODE.set_then_block(node, new_user)
+      if mcs_cats then
+	 local maxcatnum = state.cdefs["mcs_num_cats"] - 1
+	 local mcs_range = {{"s0"},{"s0",{{"c0","c"..maxcatnum}}}}
+	 local mcs_level = "s0"
+	 local new_ifdef = node_create("ifdef", node, file, lineno)
+	 IFDEF.set_conditional(new_ifdef, {"enable_mcs"})
+	 NODE.set_else_block(node, new_ifdef)
+	 new_user = node_create("user", new_ifdef, file, lineno)
+	 node_set_data(new_user, {user, roles, mcs_level, mcs_range})
+	 NODE.set_then_block(new_ifdef, new_user)
+	 new_user = node_create("user", new_ifdef, file, lineno)
+	 node_set_data(new_user, {user, roles, false, false})
+	 NODE.set_else_block(new_ifdef, new_user)
+      else
+	 new_user = node_create("user", node, file, lineno)
+	 node_set_data(new_user, {user, roles, false, false})
+	 NODE.set_else_block(node, new_user)
+      end
+   else
+      node_set_kind(node, "user")
+      node_set_data(node, {user, roles, false, false})
    end
    return node
 end
