@@ -120,7 +120,7 @@ local function set_node(node, token, file, lineno)
    node[3] = lineno
 end
 
-local function create(file_list, num_put_backs)
+local function lex_create(file_list, num_put_backs)
    local token, file, lineno
    num_put_backs = num_put_backs or 8
    local yylex = coroutine.wrap(tokenize)
@@ -136,9 +136,9 @@ local function create(file_list, num_put_backs)
    set_node(last, TOK_SOF, file, lineno)
    return {cur=cur, last=last, yylex=yylex}
 end
-common_lex.create = create
+common_lex.create = lex_create
 
-local function next(state)
+local function lex_next(state)
    if state.cur[1] ~= TOK_END then
       state.cur = state.cur.nxt
       if state.cur == state.last then
@@ -158,9 +158,9 @@ local function next(state)
       end
    end
 end
-common_lex.next = next
+common_lex.next = lex_next
 
-local function prev(state)
+local function lex_prev(state)
    local cur = state.cur
    local last = state.last
    if cur.prv == last then
@@ -168,46 +168,46 @@ local function prev(state)
    end
    state.cur = cur.prv
 end
-common_lex.prev = prev
+common_lex.prev = lex_prev
 
-local function current(state)
+local function lex_current(state)
    local node = state.cur
    return node[1]
 end
-common_lex.current = current
+common_lex.current = lex_current
 
-local function peek(state)
+local function lex_peek(state)
    local node = state.cur.nxt
    return node[1]
 end
-common_lex.peek = peek
+common_lex.peek = lex_peek
 
-local function peek_full(state)
+local function lex_peek_full(state)
    local node = state.cur.nxt
    return node[1], node[2], node[3]
 end
-common_lex.peek_full = peek_full
+common_lex.peek_full = lex_peek_full
 
-local function get(state)
-   next(state)
+local function lex_get(state)
+   lex_next(state)
    return state.cur[1]
 end
-common_lex.get = get
+common_lex.get = lex_get
 
-local function get_full(state)
-   next(state)
+local function lex_get_full(state)
+   lex_next(state)
    local node = state.cur
    return node[1], node[2], node[3]
 end
-common_lex.get_full = get_full
+common_lex.get_full = lex_get_full
 
-local function lineno(state)
+local function lex_lineno(state)
    local node = state.cur
    return node[3]
 end
-common_lex.lineno = lineno
+common_lex.lineno = lex_lineno
 
-local function filename(state)
+local function lex_filename(state)
    local node = state.cur
    if type(node[2]) == "table" then
       return "none"
@@ -215,9 +215,9 @@ local function filename(state)
       return node[2]
    end
 end
-common_lex.filename = filename
+common_lex.filename = lex_filename
 
-local function stats(state)
+local function lex_stats(state)
    local files, total_lines, total_tokens = 0, 0, 0
    if state.cur[1] == TOK_END then
       local node = state.cur
@@ -226,6 +226,6 @@ local function stats(state)
    end
    return files, total_lines, total_tokens
 end
-common_lex.stats = stats
+common_lex.stats = lex_stats
 
 return common_lex
