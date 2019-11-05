@@ -43,7 +43,8 @@ local function get_param_info_from_file(file, mdefs)
 	 optional = 0
 	 unused = 0
       end
-   end	  
+   end
+   io.close(f)
 end
 
 -------------------------------------------------------------------------------
