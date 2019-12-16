@@ -33,13 +33,13 @@ static int spt_tok_gc(lua_State *L)
 	}
 	return 0;
 }
-		
+
 static int spt_tok_create_mt(lua_State *L)
 {
 	luaL_newmetatable(L, SPT_TOK_MT);
 	lua_pushcfunction(L, spt_tok_gc);
-        lua_setfield(L, -2, "__gc");
-        return 1;
+	lua_setfield(L, -2, "__gc");
+	return 1;
 }
 
 static inline void spt_tok_add(lua_State *L, char *tok)
@@ -120,7 +120,7 @@ void spt_tok_tokenize_helper(lua_State *L, const char *filename)
 		} else {
 			*bp++ = c;
 			if (c == '&' || c == '|' || c == '=' || c == '<' || c == '>') {
-				c2 = fgetc(*file);	
+				c2 = fgetc(*file);
 				if (c == c2) {
 					*bp++ = c2;
 					c = fgetc(*file);
@@ -150,7 +150,7 @@ void spt_tok_tokenize_helper(lua_State *L, const char *filename)
 				} else {
 					*bp = '\0';
 					spt_tok_add(L, buf);
-				}	
+				}
 			} else {
 				*bp = '\0';
 				spt_tok_add(L, buf);
@@ -163,7 +163,7 @@ void spt_tok_tokenize_helper(lua_State *L, const char *filename)
 	*file = NULL;
 	lua_pop(L, 1); /* pop file */
 }
-		
+
 static int spt_tok_tokenize(lua_State *L)
 {
 	const char *file = luaL_checkstring(L, 1);
@@ -172,7 +172,7 @@ static int spt_tok_tokenize(lua_State *L)
 	spt_tok_tokenize_helper(L, file);
 	return 1;
 }
-		
+
 /* Recursively get files in directory */
 
 static int spt_fs_gc(lua_State *L)
@@ -184,13 +184,13 @@ static int spt_fs_gc(lua_State *L)
 	}
 	return 0;
 }
-		
+
 static int spt_fs_create_mt(lua_State *L)
 {
 	luaL_newmetatable(L, SPT_FS_MT);
 	lua_pushcfunction(L, spt_fs_gc);
-        lua_setfield(L, -2, "__gc");
-        return 1;
+	lua_setfield(L, -2, "__gc");
+	return 1;
 }
 
 static void spt_fs_get_files_helper(lua_State *L, const char *dirpath)
@@ -206,7 +206,7 @@ static void spt_fs_get_files_helper(lua_State *L, const char *dirpath)
 	dir = (DIR**) lua_newuserdata(L, sizeof(DIR*));
 	luaL_getmetatable(L, SPT_FS_MT);
 	lua_setmetatable(L, -2);
-	
+
 	*dir = opendir(dirpath);
 	if (!*dir) {
 		luaL_error(L, "Failed to open dir %s: %s", dirpath, strerror(errno));
@@ -242,7 +242,7 @@ static void spt_fs_get_files_helper(lua_State *L, const char *dirpath)
 			lua_seti(L, 1, index);
 		} else {
 			lua_pop(L,1); /* pop path */
-		}	
+		}
 
 		dp = readdir(*dir);
 	}
@@ -261,11 +261,29 @@ static int spt_fs_get_files(lua_State *L)
 	return 1;
 }
 
+static int spt_fs_make_dir(lua_State *L)
+{
+	int res;
+	const char *dirpath = luaL_checkstring(L, 1);
+	lua_remove(L, 1);
+	res = mkdir(dirpath, S_IWUSR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+	if (res < 0) {
+		lua_pushboolean(L, 0);
+		lua_pushfstring(L, "Failed to create dir %s: %s\n",
+				dirpath, strerror(errno));
+
+		return 2;
+	}
+	lua_pushboolean(L, 1);
+	return 1;
+}
+
 /* Lua Library */
-		
+
 static const struct luaL_Reg selpoltools[] = {
 	{"get_files", spt_fs_get_files},
 	{"tokenize_file", spt_tok_tokenize},
+	{"make_dir", spt_fs_make_dir},
 	{NULL, NULL},
 };
 
@@ -280,4 +298,3 @@ int luaopen_selpoltools(lua_State *L)
 
 	return 1;
 }
-
