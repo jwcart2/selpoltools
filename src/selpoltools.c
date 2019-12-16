@@ -278,15 +278,88 @@ static int spt_fs_make_dir(lua_State *L)
 	return 1;
 }
 
+static void spt_fs_remove_dir_helper(lua_State *L, const char *dirpath)
+{
+	DIR **dir;
+	struct dirent *dp;
+	struct stat st;
+	const char *path;
+	char *pathformat = "%s%s";
+	int rc;
+
+	dir = (DIR**) lua_newuserdata(L, sizeof(DIR*));
+	luaL_getmetatable(L, SPT_FS_MT);
+	lua_setmetatable(L, -2);
+
+	*dir = opendir(dirpath);
+	if (!*dir) {
+		luaL_error(L, "Failed to open dir %s: %s", dirpath, strerror(errno));
+		return;
+	}
+
+	if (dirpath[strlen(dirpath)-1] != '/') {
+		pathformat = "%s/%s";
+	}
+
+	dp = readdir(*dir);
+	while (dp) {
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
+			dp = readdir(*dir);
+			continue;
+		}
+
+		path = lua_pushfstring(L, pathformat, dirpath, dp->d_name);
+
+		rc = stat(path, &st);
+		if (rc != 0) {
+			luaL_error(L, "Failed to stat %s: %s", path, strerror(errno));
+			return;
+		}
+		if (st.st_mode & S_IFDIR) {
+			spt_fs_remove_dir_helper(L, path);
+		} else if (st.st_mode & S_IFREG) {
+			rc = unlink(path);
+			if (rc != 0) {
+				luaL_error(L, "Failed to unlink %s: %s",
+					   path, strerror(errno));
+				return;
+			}
+		}
+
+		lua_pop(L,1); /* pop path */
+
+		dp = readdir(*dir);
+	}
+
+	closedir(*dir);
+	*dir = NULL;
+	lua_pop(L,1); /* pop dir */
+
+	rc = rmdir(dirpath);
+	if (rc != 0) {
+		luaL_error(L, "Failed to remove dir %s: %s", dirpath, strerror(errno));
+		return;
+	}
+}
+
+static int spt_fs_remove_dir(lua_State *L)
+{
+	const char *dirpath = luaL_checkstring(L, 1);
+	lua_remove(L, 1);
+	spt_fs_remove_dir_helper(L, dirpath);
+	lua_pushboolean(L, 1);
+	return 1;
+}
+
 /* Lua Library */
 
 static const struct luaL_Reg selpoltools[] = {
 	{"get_files", spt_fs_get_files},
 	{"tokenize_file", spt_tok_tokenize},
 	{"make_dir", spt_fs_make_dir},
+	{"remove_dir", spt_fs_remove_dir},
 	{NULL, NULL},
 };
-
 
 /* gcc -o selpoltools.so -shared -fpic selpoltools.c */
 int luaopen_selpoltools(lua_State *L)
