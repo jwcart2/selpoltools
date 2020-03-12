@@ -1,0 +1,316 @@
+
+handleunknown ACTION;
+  -- Where ACTION = allow|deny|reject
+
+mls BOOLEAN;
+  -- Where BOOLEAN = true|false
+
+decl class CLASS;
+  -- This is currently how classes are declared, but this rule could be eliminated if
+     the order rule below was considered to be the declaration.
+
+order class { CLASS1 CLASS2 ... };
+  -- Could use this as the declaration of all classes, but that is not how it is
+     currently used.
+  -- Multiple order rules allowed, but an error should be given if they can't be pieced
+     together.
+
+common COMMON { PERM1 PERM2 ... };
+  -- Like the Refpolicy rule, but with semicolon at the end.
+
+class CLASS COMMON { PERM1 PERM2 ... };
+  -- Where COMMON is either a common class or "<<NONE>>" (Something must be specified)
+  -- If no additional permissions then use "{}"
+
+decl sid SID;
+  -- This is currently how sids are declared, but this rule could be eliminated if
+     the order rule below was considered to be the declaration.
+
+order sid { SID1 SID2 ... };
+  -- Could use this as the declaration of all sids, but that is not how it is
+     currently used.
+  -- Multiple order rules allowed, but an error should be given if they can't be pieced
+     together.
+
+default_user CLASS DEFAULT;
+  -- Where CLASS is a class or a list of classes: ex/ { CLASS1 CLASS2 ... }
+  -- Where DEFAULT = source|target
+
+default_role CLASS DEFAULT;
+  -- Where CLASS is a class or a list of classes: ex/ { CLASS1 CLASS2 ... }
+  -- Where DEFAULT = source|target
+
+default_type CLASS DEFAULT;
+  -- Where CLASS is a class or a list of classes: ex/ { CLASS1 CLASS2 ... }
+  -- Where DEFAULT = source|target
+
+default_range CLASS DEFAULT;
+  -- Where CLASS is a class or a list of classes: ex/ { CLASS1 CLASS2 ... }
+  -- Where DEFAULT = source|target low|high|low-high
+
+mls #SENSITIVITIES #CATEGORIES;
+  -- Declares s0 to sN sensitivities where N = #SENSITIVITIES-1
+  -- Declares c0 to cM categories where M = #CATEGORIES-1
+  -- Declares levels s0 [c0 cM] to sN [c0 cM]
+
+#decl sensitivity SENS;
+#  -- This is currently how sensitivities are declared, but this rule could be eliminated 
+#     if the order rule below was considered to be the declaration.
+
+#order sensitivity { SENS1 SENS2 ... };
+#  -- Could use this as the declaration of all sensitivities, but that is not how it is
+#     currently used.
+#  -- Multiple order rules allowed, but an error should be given if they can't be pieced
+#     together.
+#  -- This replaces the old dominance rule;
+
+alias sensitivity SENS ALIAS;
+  -- Where ALIAS is an alias or a list of aliases: ex/ { ALIAS1 ALIAS2 ... }
+
+#decl category CAT;
+#  -- This is currently how categories are declared, but this rule could be eliminated 
+#     if the order rule below was considered to be the declaration.
+
+#order category { CAT1 CAT2 ... };
+#  -- Could use this as the declaration of all categories, but that is not how it is
+#     currently used.
+#  -- Multiple order rules allowed, but an error should be given if they can't be pieced
+#     together.
+
+alias category CAT ALIAS;
+  -- Where ALIAS is an alias or a list of aliases: ex/ { ALIAS1 ALIAS2 ... }
+
+level LEVEL;
+  -- Only used to override default level created by mls statement.
+  -- Where LEVEL = SENS CATS
+  -- Where CATS is a single cat, a category range, or a list of categories
+     A category range is the first and last category enclosed in square brackets
+     ex/ [CAT1 CAT4]
+     A category list is a list of categories and category ranges
+
+alias level ALIAS LEVEL;
+  -- Creates a named level
+
+alias range ALIAS RANGE;
+  -- Creates a named range
+  -- Where RANGE is two levels enclosed in curly braces
+     ex/ { SENS1 { [CAT1 CAT4] CAT5 } SENS2 { [CAT1 CAT5] CAT6 } }
+
+mlsconstrain CLASS PERMS CONSTRAINT_EXPR;
+  -- Where CLASS is a class or list of classes
+  -- Where CONSTRAINT_EXPR is a constraint expression
+     ex/ ((h1 dom h2) and (l1 domby h1))
+
+mlsvalidatetrans CLASS1 ((l1 eq l2) or (l1 incomp l2));
+
+;; OLD policycap network_peer_controls|open_perms|extended_socket_class|always_check_network|cgroup_seclabel|nnp_nosuid_transition;
+;; 
+policycap { POLCAP1 POLCAP2 ... };
+  -- See libsepol/src/polcaps.c:polcap_names
+
+;; OLD attribute TYPEATTR1;
+typeattr TYPEATTR1;
+
+;; OLD attribute_role ROLEATTR1;
+roleattr ROLEATTR1;
+
+bool BOOL BOOL_VALUE;
+  -- Where BOOL is the boolean being declared
+  -- Where BOOL_VALUE = true|false
+
+decl type TYPE;
+  -- Where TYPE is the type being declared
+
+alias ALIAS TYPE;
+  -- Where ALIAS is an alias for type TYPE
+
+;; SAME
+typebounds PARENT CHILD;
+
+;; OLD typeattribute TYPE1 ATTR1, ATTR2, ...;
+typeattrs TYPE1 { ATTR1 ATTR2 ... };
+
+;; NEW
+attrtypes ATTR1 { ATTR1 ATTR2 (ATTRx and|or|xor ATTRy) (not ATTRz) ... };
+attrtypes ATTR1 (ATTRx and|or|xor ATTRy);
+attrtypes ATTR1 (not ATTRz);
+
+;; SAME
+permissive TYPE1;
+
+;; OLD: allow TYPESET1 TYPESET2:{ CLASS1 CLASS2 ... } { PERM1 PERM2 ... };
+;; old typeset { TYPE1 -TYPE2 -TYPE3 }
+;; new typeset { TYPE1 TYPE2 (TYPEx and|or|xor TYPEy) (not TYPEz) ... }
+;; new typeset (TYPEx and|or|xor TYPEy)
+;; new typeset (not TYPEz)
+;; allow, auditallow, and dontaudit the same
+;; neverallow allows "*" in the typeset
+allow TYPESET1 TYPESET2 CLASS1 { PERM1 PERM2 ... };
+allow TYPESET1 TYPESET2 CLASSPERMSET1;
+
+;; OLD: allowxperm TYPESET1 TYPESET2:CLASS1 ioctl 0x1234;
+;; OLD: allowxperm TYPESET1 TYPESET2:CLASS1 ioctl { 0x1234 0x1235-0x1239 };
+;; allowxperm, auditallowxperm, and dontauditxperm the same
+;; I am not sure about neverallowxperm
+allowxperm TYPESET1 TYPESET2:CLASS1 ioctl { 0x1234 0x1235 ... };
+allowxperm TYPESET1 TYPESET2:CLASS1 ioctl { 0x1234 [0x1235 0x1239] ... };
+
+;; OLD: type_transition TYPESET1 TYPESET2:{ CLASS1 CLASS2 ... } TYPE [FILE];
+typetrans TYPESET1 TYPESET2 CLASS1 TYPE FILE|nil;
+
+;; OLD: type_member TYPESET1 TYPESET2:{ CLASS1 CLASS2 ... } TYPE;
+typemember TYPESET1 TYPESET2 CLASS1 TYPE;
+
+;; OLD: type_change TYPESET1 TYPESET2:{ CLASS1 CLASS2 ... } TYPE;
+typechange TYPESET1 TYPESET2 CLASS1 TYPE;
+
+;; OLD: range_transition TYPESET1 TYPESET2 CLASS1|nil RANGE1;
+;; If class is nil then class is assumed t be "process". This is legacy behavior
+rangetrans TYPESET1 TYPESET2 CLASS1|nil { SENS1 { [CAT1 CAT4] CAT5 } SENS2 { [CAT1 CAT5] CAT6 } };
+
+;; SAME
+role ROLE1;
+
+;; OLD: role ROLE1 types { TYPE1 TYPE2 ... };
+roletypes ROLE1 TYPE1|{ TYPE1 TYPE2 ..};
+
+;; OLD: roleattribute ROLE1 ATTR1, ATTR2, ...;
+roleattrs ROLE1 ATTR1|{ ATTR1 ATTR2 ...};
+
+;; OLD: allow ROLE1 ROLE2;
+roleallow ROLE1 ROLE2;
+
+;; OLD: role_transition ROLESET1 TYPESET1:CLASS1 ROLE2;
+roletrans ROLESET1 TYPESET1 CLASS1 ROLE2;
+
+;; OLD: user USER1 [roles ROLE1] [level LEVEL1 [range RANGE1];
+user USER1;
+userrole USER1 ROLE1|{ ROLE2 ROLE3 ...};
+userlevel USER1 LEVEL1;
+userrange USER1 RANGE1;
+
+;; SAME
+constrain cl01 { p01b } not ((t1 == tpo) and (u1 != u2));
+validatetrans cl02 ((u1 == u2) or (r1 == r2));
+
+;; OLD: sid SID1 CONTEXT1
+sid SID1 CONTEXT1;
+
+;; OLD: fs_use_xattr FILESYSTEM CONTEXT;
+;; OLD: fs_use_task FILESYSTEM CONTEXT;
+;; OLD: fs_use_trans FILESYSTEM CONTEXT;
+fsuse xattr|task|trans FILESYSTEM CONTEXT;
+
+;; OLD: genfscon FILESYSTEM PATH CONTEXT
+genfscon FILESYSTEM PATH CONTEXT;
+
+;; OLD: portcon tdp|ucp|dccp|sctp PORTNUM|PORTNUM-PORTNUM CONTEXT
+portcon tdp|ucp|dccp|sctp PORTNUM|PORTNUM-PORTNUM CONTEXT;
+
+;; OLD: netifcon INTERFACE CONTEXT1 CONTEXT2
+netifcon STRING CONTEXT1 CONTEXT2;
+
+;; OLD: nodecon IPV4|IPV6 IPV4MASK|IPV6MASK CONTEXT
+nodecon4 IPV4 IPV4MASK CONTEXT;
+nodecon6 IPV6 IPV6MASK CONTEXT;
+
+# XEN
+;; OLD: pirqcon NUM CONTEXT
+pirqcon NUM|HEX CONTEXT;
+
+;; OLD: iomemcon NUM64|NUM64-NUM64 CONTEXT
+iomemcon NUM64|HEX64|NUM64-NUM64|HEX64-HEX64 CONTEXT;
+
+;; OLD: ioportcon NUM|NUM-NUM CONTEXT
+ioportcon NUM|HEX|NUM-NUM|HEX-HEX CONTEXT;
+
+;; OLD: pcidevicecon NUM|NUM-NUM CONTEXT
+pcidevicecon NUM|HEX|NUM-NUM|HEX-HEX CONTEXT;
+
+;; OLD: devicetreecon PATH CONTEXT
+devicetreecon PATH CONTEXT;
+
+####################################
+TODO
+
+;; OLD ifdef statemetns:
+;;   ifdef(`STRING',`
+;;     STATEMENTS
+;;   ','
+;;     STATEMENTS
+;;   ')
+;; NEW:
+ifdef ( BOOLEAN_EXP ) {
+  STATEMENTS
+} else {
+  STATEMENTS
+}
+
+;; OLD boolean if statements:
+;;   if ( BOOLEAN_EXP ) {
+;;     STATEMENTS
+;;   } else {
+;;     STATEMENTS
+;;   }
+;; NEW:
+boolif ( BOOLEAN_EXP ) {
+  STATEMENTS
+} else {
+  STATEMENTS
+}
+
+;; OLD: tunable if statements:
+;;   tunable_policy(`TUNABLE',`
+;;     STATEMENTS
+;;   ',`
+;;     STATEMENTS
+;;   ')
+;; NEW:
+tunif ( TUNABLE_EXP ) {
+  STATEMENTS
+} else {
+  STATEMENTS
+}
+
+;; OLD: optional:
+;; optional_policy(`
+;;   STATEMENTS
+;; ',`
+;;   STATEMENTS
+;; ')
+;; "else" branch is rare and should, in my opinion, be discouraged
+;; NEW:
+optional {
+  STATEMENTS
+}
+
+;; OLD: require blocks:
+;; gen_require(`
+;;   REQUIRES
+;; ')
+;; NEW:
+require {
+  REQUIRES
+}
+
+############################################
+
+;; New language need to be able to string catenation
+;; This should be local to block where it is defined
+string STRINGNAME1 { STRING1 STRING2 ... };
+
+;; macro definition
+macro NAME (ARG1, ARG2, ARG3, ...)
+{
+  BODY
+}
+
+;; if call does not provide an arg, then use "nil"
+;; nil and NAME == nil
+;; nil or NAME == NAME
+;; not nil == *
+call NAME (ARG1, ARG2, ARG3, ...)
+
+;; Module statement to a version statement
+;; OLD: policy_module(NAME, VERSION)
+module VERSION;
