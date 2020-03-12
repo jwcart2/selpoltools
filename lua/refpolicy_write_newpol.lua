@@ -1376,10 +1376,6 @@ local function add_orders_to_files(node, kind, do_action, do_block, data)
       add_order(NODE.get_block_1(node), "class_decl", "class", filename)
    elseif string.find(filename, "initial_sids$") then
       add_order(NODE.get_block_1(node), "sid_decl", "sid", filename)
-   elseif string.find(filename, "mcs$") then
-      add_order(NODE.get_block_1(node), "category", "category", filename)
-   elseif string.find(filename, "mls$") then
-      add_order(NODE.get_block_1(node), "category", "category", filename)
    end
 end
 
@@ -1388,6 +1384,84 @@ local function add_orders_to_policy(head)
       ["file"] = add_orders_to_files,
    }
    TREE.walk_normal_tree(NODE.get_block_1(head), action, nil)
+end
+
+-------------------------------------------------------------------------------
+local function mod_mls_helper(node, sens, cats, dominance, levels)
+
+   -- must handle blocks
+
+   local last_sen
+   local last_cat
+   local last_level
+   local cur = node
+   while cur do
+      local kind = NODE.get_kind(cur)
+      if kind == "sensitivity" then
+	 local node_data = NODE.get_data(cur) or {}
+	 local name = node_data[1]
+	 sens[#sens+1] = name
+	 last_sen = cur
+      elseif kind == "category" then
+	 local node_data = NODE.get_data(cur) or {}
+	 local name = node_data[1]
+	 cats[#cats+1] = name
+	 last_cat = cur
+      elseif kind == "dominance" then
+	 local node_data = NODE.get_data(cur) or {}
+	 dominance = node_data[1]
+      elseif kind == "level" then
+	 local node_data = NODE.get_data(cur) or {}
+	 local s = node_data[1]
+	 local level = node_data[2]
+	 levels[s] = level
+	 last_level = cur
+      end
+	 
+      local block1 = NODE.get_block_1(cur)
+      local block2 = NODE.get_block_2(cur)
+      if block1 then
+	 local last1 = add_mls_helper(block1, mls_kind, mls_flavor, filename, mls)
+	 last = last1 or last
+      end
+      if block2 then
+	 local last1 = add_mls_helper(block2, mls_kind, mls_flavor, filename, mls)
+	 last = last1 or last
+      end
+      cur = NODE.get_next(cur)
+   end
+   return last
+end
+
+local function mod_mls(node, mls_kind, mls_flavor, filename)
+   local mls = {}
+   local last = add_mls_helper(node, mls_kind, mls_flavor, filename, mls)
+   if last then
+      local new = NODE.create("mls", node, filename, NODE.get_line_number(last))
+      NODE.set_data(new, {mls_flavor, mls})
+      TREE.add_node(last, new)
+   else
+      MSG.warning("Failed to add "..tostring(mls_flavor)..
+		     " mls statement to file "..tostring(filename))
+   end
+end
+
+local function mod_mls_in_files(node, kind, do_action, do_block, data)
+   local filename = NODE.get_file_name(node)
+   if string.find(filename, "mcs$") then
+      add_mls(NODE.get_block_1(node), "category", "category", filename)
+   elseif string.find(filename, "mls$") then
+      add_mls(NODE.get_block_1(node), "category", "category", filename)
+   end
+end
+
+local function mod_mls_in_policy(misc_files)
+   for _,node in pairs(misc_files) do
+      local filename = NODE.get_file_name(node)
+      if string.find(filename, "mls$") then
+      elseif string.find(filename, "mcs$") then
+      end
+   end
 end
 
 -------------------------------------------------------------------------------
@@ -1419,6 +1493,7 @@ local function write_newpol(head, out_dir, verbose)
    local file_data = {
       ["modules"] = modules,
       ["misc_files"] = misc_files,
+      ["mls_files"] = mls_files,
    }
 
    TREE.walk_normal_tree(NODE.get_block_1(head), file_action, file_data)
