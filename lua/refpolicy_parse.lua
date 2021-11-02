@@ -1390,6 +1390,8 @@ local function parse_m4_conditional_block(state, kind, cur, node, parse_func)
 end
 
 local function parse_m4_ifelse_block(state, kind, cur, node, parse_func)
+   local notallowed = {file=true, policy_module=true, module=true, template=true,
+					   interface=true, common=true, class=true}
    warning_message(state, "Found ifelse block", 0)
    tree_add_node(cur, node)
    get_expected(state, "(")
@@ -1405,19 +1407,37 @@ local function parse_m4_ifelse_block(state, kind, cur, node, parse_func)
    node_set_data(node, {v1,v2})
    get_expected(state, "'")
    get_expected(state, ",")
-   get_expected(state, "`")  
-   local notallowed = {file=true, policy_module=true, module=true, template=true,
-					   interface=true, common=true, class=true}
+   get_expected(state, "`")
    local then_block = parse_func(state, node, notallowed, "'")
    NODE.set_then_block(node, then_block)
-   if lex_peek(state.lex) == "," then
+   local cur_ifelse = node
+   while lex_peek(state.lex) == "," do
 	  lex_next(state.lex)
 	  get_expected(state, "`")
-	  local else_block = parse_func(state, node, notallowed, "'")
-	  NODE.set_else_block(node, else_block)
+	  local v3, file, lineno = lex_get_full(state.lex)
+	  if lex_peek(state.lex) == "'" then
+		 -- ifelse that is like a case
+		 lex_next(state.lex)
+		 get_expected(state, ",")
+		 get_expected(state, "`")
+		 local v4 = lex_get(state.lex)
+		 get_expected(state, "'")
+		 get_expected(state, ",")
+		 get_expected(state, "`")
+		 local new_ifelse = node_create("ifelse", cur_ifelse, file, lineno)
+		 node_set_data(new_ifelse, {v3,v4})
+		 NODE.set_else_block(cur_ifelse, new_ifelse)
+		 then_block = parse_func(state, new_ifelse, notallowed, "'")
+		 NODE.set_then_block(new_ifelse, then_block)
+		 cur_ifelse = new_ifelse
+	  else
+		 lex_prev(state.lex)
+		 local else_block = parse_func(state, cur_ifelse, notallowed, "'")
+		 NODE.set_else_block(cur_ifelse, else_block)
+	  end
    end
    get_expected(state,")")
-   return cur
+   return node
 end
 
 local function parse_obj_perm_set(state)
