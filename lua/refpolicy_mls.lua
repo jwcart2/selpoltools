@@ -21,12 +21,12 @@ local function get_level_aliases(num_sens, num_cats)
    local low_cat = "c0"
    local high_cat = "c"..tostring(num_cats-1)
    local level_aliases = {
-      ["mls_systemhigh"] = {high_sens, {{low_cat, high_cat}}},
-      ["mls_systemlow"] = {low_sens, {}},
-      ["mcs_systemhigh"] = {low_sens, {{low_cat, high_cat}}},
-      ["mcs_systemlow"] = {low_sens, {}},
-      ["systemhigh"] = {high_sens, {{low_cat, high_cat}}},
-      ["systemlow"] = {low_sens, {}},
+	  ["mls_systemhigh"] = {high_sens, {{low_cat, high_cat}}},
+	  ["mls_systemlow"] = {low_sens, {}},
+	  ["mcs_systemhigh"] = {low_sens, {{low_cat, high_cat}}},
+	  ["mcs_systemlow"] = {low_sens, {}},
+	  ["systemhigh"] = {high_sens, {{low_cat, high_cat}}},
+	  ["systemlow"] = {low_sens, {}},
    }
 
    return level_aliases
@@ -39,10 +39,10 @@ local function create_sens(num_sens, parent, file, lineno)
    local node = NODE.create("sensitivity", parent, file, lineno)
    first = node
    for i=1,num_sens do
-      local s = "s"..tostring(i-1)
-      NODE.set_data(node, {s, false})
-      last = TREE.add_node(last, node)
-      node = NODE.create("sensitivity", parent, file, lineno)
+	  local s = "s"..tostring(i-1)
+	  NODE.set_data(node, {s, false})
+	  last = TREE.add_node(last, node)
+	  node = NODE.create("sensitivity", parent, file, lineno)
    end
    return first, last
 end
@@ -53,10 +53,10 @@ local function create_cats(num_cats, parent, file, lineno)
    local node = NODE.create("category", parent, file, lineno)
    first = node
    for i=1,num_cats do
-      local c = "c"..tostring(i-1)
-      NODE.set_data(node, {c, false})
-      last = TREE.add_node(last, node)
-      node = NODE.create("category", parent, file, lineno)
+	  local c = "c"..tostring(i-1)
+	  NODE.set_data(node, {c, false})
+	  last = TREE.add_node(last, node)
+	  node = NODE.create("category", parent, file, lineno)
    end
    return first, last
 end
@@ -66,8 +66,8 @@ local function create_dominance(num_sens, parent, file, lineno)
    local node = NODE.create("dominance", parent, file, lineno)
    local dominance = {}
    for i=1,num_sens do
-      local s = "s"..tostring(i-1)
-      dominance[#dominance+1] = s
+	  local s = "s"..tostring(i-1)
+	  dominance[#dominance+1] = s
    end
    NODE.set_data(node, {dominance})
    return node
@@ -81,10 +81,10 @@ local function create_levels(num_sens, num_cats, parent, file, lineno)
    local low_cat = "c0"
    local high_cat = "c"..tostring(num_cats-1)
    for i=1,num_sens do
-      local s = "s"..tostring(i-1)
-      NODE.set_data(node, {{s, {{low_cat, high_cat}}}})
-      last = TREE.add_node(last, node)
-      node = NODE.create("level", parent, file, lineno)
+	  local s = "s"..tostring(i-1)
+	  NODE.set_data(node, {{s, {{low_cat, high_cat}}}})
+	  last = TREE.add_node(last, node)
+	  node = NODE.create("level", parent, file, lineno)
    end
    return first, last
 end
@@ -111,7 +111,7 @@ local function create_default_mls(num_sens, num_cats, file_parent)
    TREE.add_node(cur, first)
    cur = last
    if TREE.next_node(top) then
-      NODE.set_block(file_node, TREE.next_node(top))
+	  NODE.set_block(file_node, TREE.next_node(top))
    end
    return file_node
 end

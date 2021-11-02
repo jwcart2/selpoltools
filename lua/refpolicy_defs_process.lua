@@ -10,34 +10,34 @@ local function expand_set_list(list, sets)
    local i = 1
    local last = #list
    while i <= last do
-      local e = list[i]
-      if type(e) ~= "table" then
-	 if sets[e] then
-	    table.remove(list, i)
-	    for j=1,#sets[e] do
-	       table.insert(list, i, sets[e][j])
-	       i = i + 1
-	    end
-	    last = #list
-	 else
-	    i = i + 1
-	 end
-      else
-	 expand_set_list(e, sets)
-	 i = i + 1
-      end
+	  local e = list[i]
+	  if type(e) ~= "table" then
+		 if sets[e] then
+			table.remove(list, i)
+			for j=1,#sets[e] do
+			   table.insert(list, i, sets[e][j])
+			   i = i + 1
+			end
+			last = #list
+		 else
+			i = i + 1
+		 end
+	  else
+		 expand_set_list(e, sets)
+		 i = i + 1
+	  end
    end
 end
 
 local function expand_sets(value, sets)
    if type(value) ~= "table" then
-      if sets[value] then
-	 new_value = {value}
-	 expand_set_list(new_value, sets)
-	 value = new_value
-      end
+	  if sets[value] then
+		 new_value = {value}
+		 expand_set_list(new_value, sets)
+		 value = new_value
+	  end
    else
-      expand_set_list(value, sets)
+	  expand_set_list(value, sets)
    end
    return value
 end
@@ -86,17 +86,17 @@ local function process_defs(head, verbose, defs)
 
    local def_data = {verbose=verbose, defs=defs}
    local def_action = {
-      ["classpermset"] = process_classpermset_rule,
-      ["constrain"] = process_constrain_rule,
-      ["mlsconstrain"] = process_constrain_rule,
-      ["allow"] = process_av_rule,
-      ["auditallow"] = process_av_rule,
-      ["dontaudit"] = process_av_rule,
-      ["neverallow"] = process_av_rule,
-      ["allowxperm"] = process_avx_rule,
-      ["auditallowxperm"] = process_avx_rule,
-      ["dontauditxperm"] = process_avx_rule,
-      ["neverallowxperm"] = process_avx_rule,
+	  ["classpermset"] = process_classpermset_rule,
+	  ["constrain"] = process_constrain_rule,
+	  ["mlsconstrain"] = process_constrain_rule,
+	  ["allow"] = process_av_rule,
+	  ["auditallow"] = process_av_rule,
+	  ["dontaudit"] = process_av_rule,
+	  ["neverallow"] = process_av_rule,
+	  ["allowxperm"] = process_avx_rule,
+	  ["auditallowxperm"] = process_avx_rule,
+	  ["dontauditxperm"] = process_avx_rule,
+	  ["neverallowxperm"] = process_avx_rule,
 
    }
 

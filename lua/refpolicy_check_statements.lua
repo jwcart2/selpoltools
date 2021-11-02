@@ -41,167 +41,167 @@ local cstr_flavors = {
 local function get_module_name(node)
    local filename = TREE.get_filename(node)
    if not filename then
-      return nil
+	  return nil
    end
    local s,e,name,suffix = string.find(filename,"/([%w%_%-]+)%.(%w%w)$")
    if suffix == "if" or suffix == "te" or suffix == "fc" then
-      return name
+	  return name
    end
    return nil
 end
 
 -------------------------------------------------------------------------------
 local function check_skip(flavor, value, all_decls, mod_decls, mod_name,
-			  modules, dependencies, verbose)
+						  modules, dependencies, verbose)
 end
 
 local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mod_name,
-				   modules, dependencies, verbose)
+								   modules, dependencies, verbose)
    if type(value) ~= "table" then
-      local all_flav_decls = all_decls[flavor]
-      if not all_flav_decls then
-	 TREE.warning("No declarations in policy for flavor "..tostring(flavor), node)
-	 return
-      end
-      if not all_flav_decls[value] then
-	 if flavor == "type" and value == "self" then
-	    return
-	 end
-	 if flavor == "role" and value == "object_r" then
-	    return
-	 end
-	 TREE.warning("Not declared in policy: "..tostring(flavor)..
-			 " "..tostring(value), node)
-	 return
-      end
+	  local all_flav_decls = all_decls[flavor]
+	  if not all_flav_decls then
+		 TREE.warning("No declarations in policy for flavor "..tostring(flavor), node)
+		 return
+	  end
+	  if not all_flav_decls[value] then
+		 if flavor == "type" and value == "self" then
+			return
+		 end
+		 if flavor == "role" and value == "object_r" then
+			return
+		 end
+		 TREE.warning("Not declared in policy: "..tostring(flavor)..
+					  " "..tostring(value), node)
+		 return
+	  end
 
-      if not mod_name then
-	 return
-      end
-      if flavor == "sensitivity" or flavor == "category" then
-	 return
-      end
-      if flavor == "role" and value == "system_r" then
-	 return
-      end
-      local mod_flav_decls = mod_decls[mod_name][flavor]
-      if mod_flav_decls and mod_flav_decls[value] then
-	 return
-      end
+	  if not mod_name then
+		 return
+	  end
+	  if flavor == "sensitivity" or flavor == "category" then
+		 return
+	  end
+	  if flavor == "role" and value == "system_r" then
+		 return
+	  end
+	  local mod_flav_decls = mod_decls[mod_name][flavor]
+	  if mod_flav_decls and mod_flav_decls[value] then
+		 return
+	  end
 
-      for mn,_ in pairs(all_flav_decls[value]) do
-	 dependencies[mod_name] = dependencies[mod_name] or {}
-	 dependencies[mod_name][mn] = true
-	 if modules[mn] == "base" or mn == "GLOBAL" then
-	    if modules[mod_name] == "base" or verbose == 0 then
-	       return
-	    end
-	 end
-      end
+	  for mn,_ in pairs(all_flav_decls[value]) do
+		 dependencies[mod_name] = dependencies[mod_name] or {}
+		 dependencies[mod_name][mn] = true
+		 if modules[mn] == "base" or mn == "GLOBAL" then
+			if modules[mod_name] == "base" or verbose == 0 then
+			   return
+			end
+		 end
+	  end
 
-      TREE.warning("Not declared in module: "..tostring(flavor)..
-		      " "..tostring(value), node)
-      for _,m_node in pairs(all_flav_decls[value]) do
-	 if verbose >= 1 then
-	    TREE.warning("  Declared", m_node)
-	 end
-      end
+	  TREE.warning("Not declared in module: "..tostring(flavor)..
+				   " "..tostring(value), node)
+	  for _,m_node in pairs(all_flav_decls[value]) do
+		 if verbose >= 1 then
+			TREE.warning("  Declared", m_node)
+		 end
+	  end
    else
-      for i,v in pairs(value) do
-	 if not set_ops[v] then
-	    check_simple_flavor(node, flavor, v, all_decls, mod_decls, mod_name,
-				modules, dependencies, verbose)
-	 end
-      end
+	  for i,v in pairs(value) do
+		 if not set_ops[v] then
+			check_simple_flavor(node, flavor, v, all_decls, mod_decls, mod_name,
+								modules, dependencies, verbose)
+		 end
+	  end
    end
 end
 
 local function check_level(node, flavor, value, all_decls, mod_decls, mod_name,
-			   modules, dependencies, verbose)
+						   modules, dependencies, verbose)
    if type(value) ~= "table" then
-      if not level_alias[value] then
-	 check_simple_flavor(node, "sensitivity", value, all_decls, mod_decls, mod_name,
-			     modules, dependencies, verbose)
-      end
+	  if not level_alias[value] then
+		 check_simple_flavor(node, "sensitivity", value, all_decls, mod_decls, mod_name,
+							 modules, dependencies, verbose)
+	  end
    else
-      local sens = value[1]
-      local cats = value[2]
-      check_simple_flavor(node, "sensitivity", sens, all_decls, mod_decls, mod_name,
-			  modules, dependencies, verbose)
-      if cats then
-	 check_simple_flavor(node, "category", cats, all_decls, mod_decls, mod_name,
-			     modules, dependencies, verbose)
-      end
+	  local sens = value[1]
+	  local cats = value[2]
+	  check_simple_flavor(node, "sensitivity", sens, all_decls, mod_decls, mod_name,
+						  modules, dependencies, verbose)
+	  if cats then
+		 check_simple_flavor(node, "category", cats, all_decls, mod_decls, mod_name,
+							 modules, dependencies, verbose)
+	  end
    end
 end
 
 local function check_range(node, flavor, value, all_decls, mod_decls, mod_name,
-			   modules, dependencies, verbose)
+						   modules, dependencies, verbose)
    if type(value) ~= "table" then
-      check_level(node, flavor, value, all_decls, mod_decls, mod_name,
-		  modules, dependencies, verbose)
+	  check_level(node, flavor, value, all_decls, mod_decls, mod_name,
+				  modules, dependencies, verbose)
    else
-      local low = value[1]
-      local high = value[2]
-      check_level(node, flavor, low, all_decls, mod_decls, mod_name,
-		  modules, dependencies, verbose)
-      if high then
-	 check_level(node, flavor, high, all_decls, mod_decls, mod_name,
-		     modules, dependencies, verbose)
-      end
+	  local low = value[1]
+	  local high = value[2]
+	  check_level(node, flavor, low, all_decls, mod_decls, mod_name,
+				  modules, dependencies, verbose)
+	  if high then
+		 check_level(node, flavor, high, all_decls, mod_decls, mod_name,
+					 modules, dependencies, verbose)
+	  end
    end
 end
 
 local function check_context(node, flavor, value, all_decls, mod_decls, mod_name,
-			     modules, dependencies, verbose)
+							 modules, dependencies, verbose)
    if type(value) ~= "table" then
-      TREE.warning("Expected context to contain a table", node)
+	  TREE.warning("Expected context to contain a table", node)
    end
    if #value == 1 then
-      if value[1] ~= "<<none>>" then
-	 TREE.warning("Unknown context string: "..tostring(value[1]), node)
-      end
+	  if value[1] ~= "<<none>>" then
+		 TREE.warning("Unknown context string: "..tostring(value[1]), node)
+	  end
    else
-      if value[1] ~= "system_u" then
-	 check_simple_flavor(node, "user", value[1], all_decls, mod_decls, mod_name,
-			     modules, dependencies, verbose)
-      end
-      if value[2] ~= "object_r" then
-	 check_simple_flavor(node, "role", value[2], all_decls, mod_decls, mod_name,
-			     modules, dependencies, verbose)
-      end
-      check_simple_flavor(node, "type", value[3], all_decls, mod_decls, mod_name,
-			  modules, dependencies, verbose)
-      if value[4] then
-	 check_range(node, "range", value[4], all_decls, mod_decls, mod_name,
-		     modules, dependencies, verbose)
-      end
+	  if value[1] ~= "system_u" then
+		 check_simple_flavor(node, "user", value[1], all_decls, mod_decls, mod_name,
+							 modules, dependencies, verbose)
+	  end
+	  if value[2] ~= "object_r" then
+		 check_simple_flavor(node, "role", value[2], all_decls, mod_decls, mod_name,
+							 modules, dependencies, verbose)
+	  end
+	  check_simple_flavor(node, "type", value[3], all_decls, mod_decls, mod_name,
+						  modules, dependencies, verbose)
+	  if value[4] then
+		 check_range(node, "range", value[4], all_decls, mod_decls, mod_name,
+					 modules, dependencies, verbose)
+	  end
    end
 end
 
 local function check_constraint_expr(node, flavor, value, all_decls, mod_decls, mod_name,
-				     modules, dependencies, verbose)
+									 modules, dependencies, verbose)
    if type(value) ~= "table" then
-      TREE.warning("Expected constraint expression to contain a table", node)
+	  TREE.warning("Expected constraint expression to contain a table", node)
    end
    local f = cstr_flavors[value[1]]
    if f then
-      if not cstr_flavors[value[3]] then
-	 if f == "level" then
-	    check_level(node, f, value[3], all_decls, mod_decls, mod_name,
-			modules, dependencies, verbose)
-	 else
-	    check_simple_flavor(node, f, value[3], all_decls, mod_decls, mod_name,
-				modules, dependencies, verbose)
-	 end
-      end
+	  if not cstr_flavors[value[3]] then
+		 if f == "level" then
+			check_level(node, f, value[3], all_decls, mod_decls, mod_name,
+						modules, dependencies, verbose)
+		 else
+			check_simple_flavor(node, f, value[3], all_decls, mod_decls, mod_name,
+								modules, dependencies, verbose)
+		 end
+	  end
    else
-      for _,v in pairs(value) do
-	 if type(v) == "table" then
-	    check_constraint_expr(node, flavor, v, all_decls, mod_decls, mod_name,
-				  modules, dependencies, verbose)
-	 end
-      end
+	  for _,v in pairs(value) do
+		 if type(v) == "table" then
+			check_constraint_expr(node, flavor, v, all_decls, mod_decls, mod_name,
+								  modules, dependencies, verbose)
+		 end
+	  end
    end
 end
 
@@ -236,46 +236,46 @@ local function check_call(node, kind, do_action, do_block, data)
    local macro_name = MACRO.get_call_name(node)
    local macro_def = data.macros[macro_name]
    if not macro_def then
-      return
+	  return
    end
 
    if not data.in_optional then
-      local mod_name = get_module_name(macro_def)
-      if mod_name and data.name ~= mod_name then
-	 data.dependencies[data.name] = data.dependencies[data.name] or {}
-	 data.dependencies[data.name][mod_name] = true
-	 if data.modules[mod_name] ~= "base" and
-	 (data.modules[data.name] == "base" or data.verbose > 0) then
-	    TREE.warning("Call outside of an optional block: "..tostring(macro_name),
-			 node)
-	 end
-      end
+	  local mod_name = get_module_name(macro_def)
+	  if mod_name and data.name ~= mod_name then
+		 data.dependencies[data.name] = data.dependencies[data.name] or {}
+		 data.dependencies[data.name][mod_name] = true
+		 if data.modules[mod_name] ~= "base" and
+			(data.modules[data.name] == "base" or data.verbose > 0) then
+			TREE.warning("Call outside of an optional block: "..tostring(macro_name),
+						 node)
+		 end
+	  end
    end
 
    local arg_flavors = MACRO.get_def_orig_flavors(macro_def)
    local call_args = MACRO.get_call_orig_args(node)
    for i,flavor in pairs(arg_flavors) do
-      if call_args[i] then
-	 if type(flavor) ~= "table" then
-	    if check_flavor[flavor] then
-	       check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
-				    data.name, data.modules, data.dependencies,
-				    data.verbose)
-	    else
-	       TREE.warning("No function to check flavor: "..tostring(flavor), node)
-	    end
-	 else
-	    for _,f in pairs(flavor) do
-	       if check_flavor[f] then
-		  check_flavor[f](node, flavor, call_args[i], data.all, data.mod,
-				  data.name, data.modules, data.dependencies,
-				  data.verbose)
-	       else
-		  TREE.warning("No function to check flavor: "..tostring(f), node)
-	       end
-	    end
-	 end
-      end
+	  if call_args[i] then
+		 if type(flavor) ~= "table" then
+			if check_flavor[flavor] then
+			   check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
+									data.name, data.modules, data.dependencies,
+									data.verbose)
+			else
+			   TREE.warning("No function to check flavor: "..tostring(flavor), node)
+			end
+		 else
+			for _,f in pairs(flavor) do
+			   if check_flavor[f] then
+				  check_flavor[f](node, flavor, call_args[i], data.all, data.mod,
+								  data.name, data.modules, data.dependencies,
+								  data.verbose)
+			   else
+				  TREE.warning("No function to check flavor: "..tostring(f), node)
+			   end
+			end
+		 end
+	  end
    end 
 end
 
@@ -283,16 +283,16 @@ local function check_statement(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
    local flavors = data.flavors[kind]
    if not flavors then
-      MSG.warning("No flavors information for a "..tostring(kind).." statement")
-      return
+	  MSG.warning("No flavors information for a "..tostring(kind).." statement")
+	  return
    end
    for i,flavor in pairs(flavors) do
-      if check_flavor[flavor] then
-	 check_flavor[flavor](node, flavor, node_data[i], data.all, data.mod, data.name,
-			      data.modules, data.dependencies, data.verbose)
-      else
-	 TREE.warning("No function to check flavor: "..tostring(flavor), node)
-      end
+	  if check_flavor[flavor] then
+		 check_flavor[flavor](node, flavor, node_data[i], data.all, data.mod, data.name,
+							  data.modules, data.dependencies, data.verbose)
+	  else
+		 TREE.warning("No function to check flavor: "..tostring(flavor), node)
+	  end
    end
 end
 
@@ -313,7 +313,7 @@ local function check_file(node, kind, do_action, do_block, data)
    local s,e,name,suffix = string.find(path,"/([%w%_%-]+)%.(%w%w)$")
 
    if suffix == "if" or suffix == "te" or suffix == "fc" then
-      data.name = name
+	  data.name = name
    end
    local block = NODE.get_block(node)
    TREE.walk_normal_tree(block, data.actions, data)
@@ -321,14 +321,14 @@ local function check_file(node, kind, do_action, do_block, data)
 end
 
 local function check_statements_in_policy(head, all_decls, mod_decls, macro_defs, modules,
-					  verbose)
+										  verbose)
    MSG.verbose_out("\nCheck policy statements for undeclared identifiers",
-		   verbose, 0)
+				   verbose, 0)
 
    local statement_flavors = FLAVORS.statements
    local statement_actions = {}
    for kind,_ in pairs(statement_flavors) do
-      statement_actions[kind] = check_statement
+	  statement_actions[kind] = check_statement
    end
    statement_actions["optional"] = check_optional
    statement_actions["call"] = check_call
@@ -336,11 +336,11 @@ local function check_statements_in_policy(head, all_decls, mod_decls, macro_defs
 
    local dependencies = {}
    local data = {flavors=statement_flavors, actions=statement_actions, all=all_decls,
-		 mod=mod_decls, macros=macro_defs, modules=modules, in_optional=false,
-		 dependencies=dependencies, verbose=verbose}
+				 mod=mod_decls, macros=macro_defs, modules=modules, in_optional=false,
+				 dependencies=dependencies, verbose=verbose}
 
    local actions = {
-      ["file"] = check_file,
+	  ["file"] = check_file,
    }
    TREE.walk_normal_tree(head, actions, data)
 

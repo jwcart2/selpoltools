@@ -20,13 +20,13 @@ node_ifdef.get_conditional = get_conditional
 
 local function set_conditional(node, conditional)
    if not node then
-      return
+	  return
    end
    local data = node[6] --Inlining: NODE.get_data(node)
    if not data then
-      node_set_data(node, {conditional, false})
+	  node_set_data(node, {conditional, false})
    else
-      data[1] = conditional
+	  data[1] = conditional
    end
 end
 node_ifdef.set_conditional = set_conditional

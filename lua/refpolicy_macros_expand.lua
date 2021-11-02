@@ -7,29 +7,29 @@ local refpolicy_macros_expand = {}
 -------------------------------------------------------------------------------
 local function copy_and_expand_data(old, args)
    if old == false then
-      return false
+	  return false
    else
-      local new = {}
-      for i,v in pairs(old) do
-	 if type(v) ~= "table" then
-	    if args[v] then
-	       new[i] = args[v]
-	    else
-	       new[i] = v
-	    end
-	 else
-	    new[i] = copy_and_expand_data(v, args)
-	 end
-      end
-      return new
+	  local new = {}
+	  for i,v in pairs(old) do
+		 if type(v) ~= "table" then
+			if args[v] then
+			   new[i] = args[v]
+			else
+			   new[i] = v
+			end
+		 else
+			new[i] = copy_and_expand_data(v, args)
+		 end
+	  end
+	  return new
    end
 end
 
 local function create_trans_table(args)
    local trans_tab = {}
    for i,v in pairs(args) do
-      local a = "$"..tostring(i)
-      trans_tab[a] = v
+	  local a = "$"..tostring(i)
+	  trans_tab[a] = v
    end
    return trans_tab
 end
@@ -37,30 +37,30 @@ end
 local function translate_complex_value(value, trans_tab)
    local s,e,arg = string.find(value, "(%$%d+)")
    if not s then
-      return value
+	  return value
    else
-      local t = {}
-      local rem = value
-      while s do
-	 t[#t+1] = string.sub(rem,1,s-1)
-	 t[#t+1] = trans_tab[arg]
-	 rem = string.sub(rem,e+1)
-	 s,e,arg = string.find(rem, "(%$%d+)")
-      end
-      t[#t+1] = rem
-      return table.concat(t)
+	  local t = {}
+	  local rem = value
+	  while s do
+		 t[#t+1] = string.sub(rem,1,s-1)
+		 t[#t+1] = trans_tab[arg]
+		 rem = string.sub(rem,e+1)
+		 s,e,arg = string.find(rem, "(%$%d+)")
+	  end
+	  t[#t+1] = rem
+	  return table.concat(t)
    end
 end   
 
 local function create_call_exp_args(exp_args, trans_tab)
    local call_exp_args = {}
    for v,_ in pairs(exp_args) do
-      if trans_tab[v] then
-	 call_exp_args[v] = trans_tab[v]
-      else
-	 local value = translate_complex_value(v, trans_tab)
-	 call_exp_args[v] = value
-      end
+	  if trans_tab[v] then
+		 call_exp_args[v] = trans_tab[v]
+	  else
+		 local value = translate_complex_value(v, trans_tab)
+		 call_exp_args[v] = value
+	  end
    end
    return call_exp_args
 end
@@ -78,10 +78,10 @@ local function copy_and_expand_node(old, cur, parent, args, mdefs)
    local new = {kind, parent, false, filename, lineno, new_data, false}
    NODE.set_next(cur, new)
    if kind == "call" then
-      local name = MACRO.get_call_name(new)
-      if mdefs[name] then
-	 expand_call_inside_macro(new, mdefs[name], mdefs, args)
-      end
+	  local name = MACRO.get_call_name(new)
+	  if mdefs[name] then
+		 expand_call_inside_macro(new, mdefs[name], mdefs, args)
+	  end
    end
    return new
 end
@@ -90,21 +90,21 @@ local function copy_and_expand_block(old, parent, args, mdefs)
    local start = false
    local cur
    while old do
-      cur = copy_and_expand_node(old, cur, parent, args, mdefs)
-      if NODE.has_block(old) then
-	 local old1 = NODE.get_block_1(old)
-	 local old2 = NODE.get_block_2(old)
-	 if old1 then
-	    local block1 = copy_and_expand_block(old1, cur, args, mdefs)
-	    NODE.set_block_1(cur, block1)
-	 end
-	 if old2 then
-	    local block2 = copy_and_expand_block(old2, cur, args, mdefs)
-	    NODE.set_block_2(cur, block2)
-	 end
-      end
-      old = NODE.get_next(old)
-      start = start or cur
+	  cur = copy_and_expand_node(old, cur, parent, args, mdefs)
+	  if NODE.has_block(old) then
+		 local old1 = NODE.get_block_1(old)
+		 local old2 = NODE.get_block_2(old)
+		 if old1 then
+			local block1 = copy_and_expand_block(old1, cur, args, mdefs)
+			NODE.set_block_1(cur, block1)
+		 end
+		 if old2 then
+			local block2 = copy_and_expand_block(old2, cur, args, mdefs)
+			NODE.set_block_2(cur, block2)
+		 end
+	  end
+	  old = NODE.get_next(old)
+	  start = start or cur
    end
    return start
 end
@@ -131,13 +131,13 @@ local function expand_macros(mdefs, calls_out, verbose)
    MSG.verbose_out("\nExpand macro calls", verbose, 0)
 
    for name, call_list in pairs(calls_out) do
-      if mdefs[name] then
-	 for _, call in pairs(call_list) do
-	    if not NODE.has_block(call) then
-	       expand_call_outside_macro(call, mdefs[name], mdefs)
-	    end
-	 end
-      end
+	  if mdefs[name] then
+		 for _, call in pairs(call_list) do
+			if not NODE.has_block(call) then
+			   expand_call_outside_macro(call, mdefs[name], mdefs)
+			end
+		 end
+	  end
    end
 end
 refpolicy_macros_expand.expand_macros = expand_macros

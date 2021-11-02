@@ -7,7 +7,7 @@ local tree = {}
 local function add_node(cur, node)
    local nxt = NODE.get_next(cur)
    if nxt then
-      NODE.set_next(node, nxt)
+	  NODE.set_next(node, nxt)
    end
    NODE.set_next(cur, node)
    return node
@@ -16,7 +16,7 @@ tree.add_node = add_node
 
 local function remove_node(cur, prev)
    if not cur then
-      return
+	  return
    end
    local nxt = NODE.get_next(cur)
    NODE.set_next(prev, nxt)
@@ -30,7 +30,7 @@ tree.next_node = next_node
 -------------------------------------------------------------------------------
 local function get_head(cur)
    while NODE.get_parent(cur) do
-      cur = NODE.get_parent(cur)
+	  cur = NODE.get_parent(cur)
    end
    return cur
 end
@@ -39,8 +39,8 @@ tree.get_head = get_head
 local function get_last_node(cur)
    local nxt = next_node(cur)
    while nxt do
-      cur = nxt
-      nxt = next_node(cur)
+	  cur = nxt
+	  nxt = next_node(cur)
    end
    return cur
 end
@@ -48,7 +48,7 @@ tree.get_last_node = get_last_node
 
 local function get_filename(cur)
    while cur and not NODE.get_file_name(cur) do
-      cur = NODE.get_parent(cur)
+	  cur = NODE.get_parent(cur)
    end
    return cur and NODE.get_file_name(cur)
 end
@@ -56,7 +56,7 @@ tree.get_filename = get_filename
 
 local function get_lineno(cur)
    while cur and not NODE.get_line_number(cur) do
-      cur = NODE.get_parent(cur)
+	  cur = NODE.get_parent(cur)
    end
    return cur and NODE.get_line_number(cur)
 end
@@ -112,7 +112,7 @@ tree.disable_inactive = disable_inactive
 -------------------------------------------------------------------------------
 local function compose_line_and_file_string(node)
    if not node then
-      return ""
+	  return ""
    end
    local line = get_lineno(node) or "(?)"
    local path = get_filename(node) or "(?)"
@@ -125,7 +125,7 @@ tree.compose_line_and_file_string = compose_line_and_file_string
 local function warning(msg, node)
    local msg = msg or ""
    if node then
-      msg = msg.." at "..compose_line_and_file_string(node)
+	  msg = msg.." at "..compose_line_and_file_string(node)
    end
    MSG.warning(msg)
 end
@@ -134,7 +134,7 @@ tree.warning = warning
 local function verbose_warning(verbose, level, msg, node)
    local msg = msg or ""
    if node then
-      msg = msg.." at "..compose_line_and_file_string(node)
+	  msg = msg.." at "..compose_line_and_file_string(node)
    end
    MSG.verbose_out(msg, verbose, level)
 end
@@ -158,7 +158,7 @@ tree.warning3 = warning3
 local function error_message(msg, node)
    local msg = msg or ""
    if node then
-      msg = msg.." at "..compose_line_and_file_string(node)
+	  msg = msg.." at "..compose_line_and_file_string(node)
    end
    MSG.error_message(msg)
 end
@@ -166,11 +166,11 @@ tree.error_message = error_message
 
 local function error_check(cond, msg, node)
    if cond then
-      local msg = msg or ""
-      if node then
-	 msg = msg.." at "..compose_line_and_file_string(node)
-      end
-      original_error_message(msg)
+	  local msg = msg or ""
+	  if node then
+		 msg = msg.." at "..compose_line_and_file_string(node)
+	  end
+	  original_error_message(msg)
    end
 end
 tree.error_check = error_check
@@ -182,27 +182,27 @@ local function walk_block(cur, do_action, do_block, data, walk_func)
    local n1 = cur[7][1] --Inlining: NODE.get_block_1(cur)
    local n2 = cur[7][2] --Inlining: NODE.get_block_2(cur)
    if n1 then
-      walk_func(n1, do_action, do_block, data)
+	  walk_func(n1, do_action, do_block, data)
    end
    if n2 then
-      walk_func(n2, do_action, do_block, data)
+	  walk_func(n2, do_action, do_block, data)
    end
 end
 tree.walk_block = walk_block
 
 local function walk_tree(cur, do_action, do_block, data)
    while cur do
-      -- Inner loop is run > 3,000,000 times for Refpolicy
-      local kind = cur[1] --Inlining: NODE.get_kind(cur)
-      
-      if do_action and do_action[kind] then	 
-	 do_action[kind](cur, kind, do_action, do_block, data)
-      elseif do_block and do_block[kind] then
-	 do_block[kind](cur, kind, do_action, do_block, data)
-     elseif cur[7] then --Inlining: NODE.has_block(cur)
-	 walk_block(cur, do_action, do_block, data, walk_tree)
-      end
-      cur = cur[3] --Inlining: next_node(cur) [which is NODE.get_next(cur)]
+	  -- Inner loop is run > 3,000,000 times for Refpolicy
+	  local kind = cur[1] --Inlining: NODE.get_kind(cur)
+	  
+	  if do_action and do_action[kind] then	 
+		 do_action[kind](cur, kind, do_action, do_block, data)
+	  elseif do_block and do_block[kind] then
+		 do_block[kind](cur, kind, do_action, do_block, data)
+	  elseif cur[7] then --Inlining: NODE.has_block(cur)
+		 walk_block(cur, do_action, do_block, data, walk_tree)
+	  end
+	  cur = cur[3] --Inlining: next_node(cur) [which is NODE.get_next(cur)]
    end
 end
 tree.walk_tree = walk_tree

@@ -13,7 +13,7 @@ end
 
 -------------------------------------------------------------------------------
 local function find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, file_parent,
-					     verbose)
+											 verbose)
    local file_name = "File Added for Undefined Macros"
    local lineno = 0 -- It's generated, so just leave at 0
    local file_node = NODE.create("file", file_parent, file_name, lineno)
@@ -21,34 +21,34 @@ local function find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, file_
    local top = NODE.create(false, false, false, false)
    local cur = top
    for name, call_list in pairs(calls) do
-      if not mdefs[name] and not inactive_mdefs[name] then
-	 MSG.verbose_out("Creating macro definition for "..tostring(name).."()",
-			 verbose, 1)
-	 local mdef = NODE.create("macro", file_node, file_name, lineno)
-	 mdefs[name] = mdef
-	 local num_args = -1
-	 for _,call in pairs(call_list) do
-	    local args = MACRO.get_call_orig_args(call)
-	    if #args > num_args then
-	       num_args = #args
-	    end
-	 end
-	 local used = {}
-	 used["string"] = {}
-	 for i=1,num_args do
-	    local arg = "$"..tostring(i)
-	    used["string"][arg] = true
-	 end
-	 -- Really don't want warnings about too many or too few params
-	 local optional = 1
-	 local unused = 1
-	 MACRO.set_def_data(mdef, name, false, false, false, {}, used, false,
-			    {optional, unused}, false)
-	 cur = TREE.add_node(cur, mdef)
-      end
+	  if not mdefs[name] and not inactive_mdefs[name] then
+		 MSG.verbose_out("Creating macro definition for "..tostring(name).."()",
+						 verbose, 1)
+		 local mdef = NODE.create("macro", file_node, file_name, lineno)
+		 mdefs[name] = mdef
+		 local num_args = -1
+		 for _,call in pairs(call_list) do
+			local args = MACRO.get_call_orig_args(call)
+			if #args > num_args then
+			   num_args = #args
+			end
+		 end
+		 local used = {}
+		 used["string"] = {}
+		 for i=1,num_args do
+			local arg = "$"..tostring(i)
+			used["string"][arg] = true
+		 end
+		 -- Really don't want warnings about too many or too few params
+		 local optional = 1
+		 local unused = 1
+		 MACRO.set_def_data(mdef, name, false, false, false, {}, used, false,
+							{optional, unused}, false)
+		 cur = TREE.add_node(cur, mdef)
+	  end
    end
    if TREE.next_node(top) then
-      NODE.set_block(file_node, TREE.next_node(top))
+	  NODE.set_block(file_node, TREE.next_node(top))
    end
    return file_node
 end
@@ -58,7 +58,7 @@ local function add_undefined_macros(head, mdefs, inactive_mdefs, calls, verbose)
    MSG.verbose_out("\nAdd undefined macros", verbose, 0)
 
    local undefined = find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, head,
-						   verbose)
+												   verbose)
    local last = get_last_node(head)
    TREE.add_node(last, undefined)
 end

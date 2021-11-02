@@ -15,13 +15,13 @@ end
 
 local function add_macro_def(node, kind, do_action, do_block, data)
    local call_action = {
-      ["call"] = add_macro_call_inside,
+	  ["call"] = add_macro_call_inside,
    }
    local name = MACRO.get_def_name(node)
    if name and data.mdefs[name] then
-      TREE.warning("Duplicate macro def", node)
-      TREE.warning("  Previously declared at", data.mdefs[name])
-      return
+	  TREE.warning("Duplicate macro def", node)
+	  TREE.warning("  Previously declared at", data.mdefs[name])
+	  return
    end
    data.mdefs[name] = node
    local block = NODE.get_block(node)
@@ -46,8 +46,8 @@ local function collect_active_macros(head, verbose)
 
    local data = {verbose=verbose, mdefs={}, calls={}, calls_out={}}
    local macro_action = {
-      ["macro"] = add_macro_def,
-      ["call"] = add_macro_call_outside,
+	  ["macro"] = add_macro_def,
+	  ["call"] = add_macro_call_outside,
    }
 
    head = TREE.get_head(head)
@@ -67,9 +67,9 @@ refpolicy_macros_collect.collect_active_macros = collect_active_macros
 local function add_inactive_macro_def(node, kind, do_action, do_block, data)
    local name = MACRO.get_def_name(node)
    if name and data.mdefs[name] then
-      TREE.warning1(data.verbose, "Duplicate macro def", node)
-      TREE.warning1(data.verbose, "  Previously declared at", data.mdefs[name])
-      return
+	  TREE.warning1(data.verbose, "Duplicate macro def", node)
+	  TREE.warning1(data.verbose, "  Previously declared at", data.mdefs[name])
+	  return
    end
    data.mdefs[name] = node
 end
@@ -79,7 +79,7 @@ local function collect_inactive_macros(head, verbose)
 
    local data = {verbose=verbose, mdefs={}}
    local macro_action = {
-      ["macro"] = add_inactive_macro_def,
+	  ["macro"] = add_inactive_macro_def,
    }
 
    head = TREE.get_head(head)
