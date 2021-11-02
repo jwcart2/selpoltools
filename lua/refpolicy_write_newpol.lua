@@ -297,9 +297,9 @@ end
 local function buffer_filecon_rule(buf, format, node)
    local data = NODE.get_data(node) or {}
    local path = tostring(data[1])
-   local flag = tostring(data[2])
+   local file_type = tostring(data[2])
    local context = compose_context(data[3])
-   local str = "filecon "..path.." "..flag.." "..context..";"
+   local str = "filecon "..path.." "..file_type.." "..context..";"
    STRING.add_to_buffer(buf, format, str)
 end
 
@@ -696,10 +696,16 @@ end
 
 local function buffer_genfscon_rule(buf, format, node)
    local data = NODE.get_data(node) or {}
-   local fs = tostring(data[1])
+   local fs_name = tostring(data[1])
    local path = tostring(data[2])
-   local context = compose_context(data[3])
-   local str = "genfscon "..fs.." "..path.." "..context..";"
+   local file_type = tostring(data[3])
+   local context = compose_context(data[4])
+   local str = "genfscon "..fs_name.." "..path.." "
+   if file_type == "all" then
+	  str = str..context..";"
+   else
+	  str = str..file_type.." "..context..";"
+   end
    STRING.add_to_buffer(buf, format, str)
 end
 

@@ -1141,9 +1141,10 @@ local function parse_validatetrans_rule(state, kind, cur, node)
 end
 
 
+local valid_file_types = {["-b"]=true, ["-c"]=true, ["-d"]=true, ["-p"]=true,
+   ["-l"]=true, ["-s"]=true, ["--"]=true}
+
 local function parse_filecon_rule(state, kind, cur, node)
-   local valid_file_types = {["-b"]=true, ["-c"]=true, ["-d"]=true, ["-p"]=true,
-	  ["-l"]=true, ["-s"]=true, ["--"]=true}
    node_set_kind(node, "filecon")
    tree_add_node(cur, node)
    local path = kind
@@ -1158,11 +1159,10 @@ local function parse_filecon_rule(state, kind, cur, node)
 	  end
    end
    add_to_used(state, path, "string")
-   local file_type = ""
-   local token = lex_peek(state.lex)
-   if token == "-" then
-	  lex_next(state.lex)
-	  file_type = "-"..get_identifier(state, "string")
+   local file_type = "all"
+   if lex_peek(state.lex) == "-" then
+ 	  lex_next(state.lex)
+	  file_type = "-"..lex_get(state.lex)
 	  if not valid_file_types[file_type] then
 		 error_message(state, "Invalid file type ("..tostring(file_type)..")"..
 					   " for filecon rule")
@@ -1187,8 +1187,17 @@ local function parse_genfscon_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local fs_name = get_identifier(state, "string")
    local path = get_identifier(state, "string")
+   local file_type = "all"
+   if lex_peek(state.lex) == "-" then
+	  lex_next(state.lex)
+	  file_type = "-"..lex_get(state.lex)
+	  if not valid_file_types[file_type] then
+		 error_message(state, "Invalid file type \""..tostring(file_type).."\""..
+					   " for genfscon rule")
+	  end
+   end
    local context = get_context(state)
-   node_set_data(node, {fs_name, path, context})
+   node_set_data(node, {fs_name, path, file_type, context})
    return node
 end
 
