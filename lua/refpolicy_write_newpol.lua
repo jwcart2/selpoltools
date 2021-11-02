@@ -1318,19 +1318,18 @@ local function write_modules(modules, common_path, out_dir, format)
 																	 common_path)
 		 create_dirs(dirs, out_dir)
 		 out = open_file(dirs, mod, out_dir)
-	  else
-		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(te_node)).."\n")
-		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(if_node)).."\n")
-		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(fc_node)).."\n")
-		 out = io.stdout
-	  end
-
-	  write_te_file(out, NODE.get_block_1(te_node), format)
-	  write_if_file(out, NODE.get_block_1(if_node), format)
-	  write_fc_file(out, NODE.get_block_1(fc_node), format)
-
-	  if out_dir then
+		 write_te_file(out, NODE.get_block_1(te_node), format)
+		 write_if_file(out, NODE.get_block_1(if_node), format)
+		 write_fc_file(out, NODE.get_block_1(fc_node), format)
 		 out:close()
+	  else
+		 out = io.stdout
+		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(te_node)).."\n")
+		 write_te_file(out, NODE.get_block_1(te_node), format)
+		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(if_node)).."\n")
+		 write_if_file(out, NODE.get_block_1(if_node), format)
+		 io.stdout:write("# FILE: "..tostring(NODE.get_file_name(fc_node)).."\n")
+		 write_fc_file(out, NODE.get_block_1(fc_node), format)
 	  end
    end
 end
