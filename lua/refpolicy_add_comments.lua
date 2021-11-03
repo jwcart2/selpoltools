@@ -82,11 +82,11 @@ local function add_comments_to_block(block, parent, file, comments, i)
 			local block2 = NODE.get_block_2(cur)
 			if block1 then
 			   i, block1 = add_comments_to_block(block1, cur, file, comments, i)
-			   NODE.set_block(cur, block1)
+			   NODE.set_block_1(cur, block1)
 			end
 			if block2 then
 			   i, block2 = add_comments_to_block(block2, cur, file, comments, i)
-			   NODE.set_block(cur, block2)
+			   NODE.set_block_2(cur, block2)
 			end
 		 end
 		 prev = cur
