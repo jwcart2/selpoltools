@@ -35,7 +35,7 @@ local MACROS_CHECK = require "refpolicy_macros_check"
 local MACROS_PARAM = require "refpolicy_macros_param_info"
 local MACROS_PROCESS = require "refpolicy_macros_process"
 local COMMENTS = require "refpolicy_add_comments"
-local WRITE_NEWPOL = require "refpolicy_write_newpol"
+local SIMPL_WRITE = require "simpl_write"
 
 local DECLS = require "refpolicy_declarations"
 local MLS = require "refpolicy_mls"
@@ -191,6 +191,6 @@ MACROS_PROCESS.process_macro_calls(mdefs, calls_out, verbose)
 
 MSG.debug_time_and_gc(DEBUG)
 
-WRITE_NEWPOL.write_newpol(head, out_dir, verbose)
+SIMPL_WRITE.write_simpl(head, out_dir, verbose)
 
 MSG.debug_time_and_gc(DEBUG)

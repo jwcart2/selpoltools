@@ -8,7 +8,7 @@ local TABLE = require "common_table"
 local MACRO = require "node_macro"
 local TREE = require "tree"
 
-local tree_write_newpol = {}
+local simpl_write = {}
 
 -------------------------------------------------------------------------------
 local function flush_buffer(out, buffer)
@@ -837,7 +837,7 @@ local function buffer_blank_rule(buf, format, node)
    STRING.add_to_buffer(buf, format, str)
 end
 
-local newpol_rules = {
+local simpl_rules = {
    ["handleunknown"] = buffer_handleunknown_rule,
    ["mls"] = buffer_mls_rule,
    ["filecon"] = buffer_filecon_rule,
@@ -1117,7 +1117,7 @@ local function buffer_macro_block(buf, format, node, do_rules, do_blocks)
    replace_compound_args(buf, start, cargs)
 end
 
-local newpol_blocks = {
+local simpl_blocks = {
    ["module"] = buffer_module_block,
    ["ifdef"] = buffer_ifdef_block,
    ["ifelse"] = buffer_ifelse_block,
@@ -1140,11 +1140,11 @@ local function write_fc_file(out, block, format)
 	  elseif kind == "blank" then
 		 buffer_blank_rule(buf, format, cur)
 	  elseif kind == "tunif" then
-		 buffer_tunif_block(buf, format, cur, newpol_rules, newpol_blocks)
+		 buffer_tunif_block(buf, format, cur, simpl_rules, simpl_blocks)
 	  elseif kind == "ifdef" then
-		 buffer_ifdef_block(buf, format, cur, newpol_rules, newpol_blocks)
+		 buffer_ifdef_block(buf, format, cur, simpl_rules, simpl_blocks)
 	  elseif kind == "optional" then
-		 buffer_optional_block(buf, format, cur, newpol_rules, newpol_blocks)
+		 buffer_optional_block(buf, format, cur, simpl_rules, simpl_blocks)
 	  else
 		 TREE.warning("Did not expect this: "..tostring(kind), block)
 	  end
@@ -1161,10 +1161,10 @@ local function write_if_file(out, block, format)
    local cur = block
    while cur do
 	  kind = NODE.get_kind(cur)
-	  if newpol_rules[kind] then
-		 newpol_rules[kind](buf, format, cur)
-	  elseif newpol_blocks[kind] then
-		 newpol_blocks[kind](buf, format, cur, newpol_rules, newpol_blocks)
+	  if simpl_rules[kind] then
+		 simpl_rules[kind](buf, format, cur)
+	  elseif simpl_blocks[kind] then
+		 simpl_blocks[kind](buf, format, cur, simpl_rules, simpl_blocks)
 	  else
 		 TREE.warning("Did not expect this: "..tostring(kind), block)
 	  end
@@ -1181,10 +1181,10 @@ local function write_te_file(out, block, format)
    local cur = block
    while cur do
 	  kind = NODE.get_kind(cur)
-	  if newpol_rules[kind] then
-		 newpol_rules[kind](buf, format, cur)
-	  elseif newpol_blocks[kind] then
-		 newpol_blocks[kind](buf, format, cur, newpol_rules, newpol_blocks)
+	  if simpl_rules[kind] then
+		 simpl_rules[kind](buf, format, cur)
+	  elseif simpl_blocks[kind] then
+		 simpl_blocks[kind](buf, format, cur, simpl_rules, simpl_blocks)
 	  else
 		 TREE.warning("Did not expect this: "..tostring(kind), block)
 	  end
@@ -1200,10 +1200,10 @@ local function write_misc_file(out, block, format)
    local cur = block
    while cur do
 	  kind = NODE.get_kind(cur)
-	  if newpol_rules[kind] then
-		 newpol_rules[kind](buf, format, cur)
-	  elseif newpol_blocks[kind] then
-		 newpol_blocks[kind](buf, format, cur, newpol_rules, newpol_blocks)
+	  if simpl_rules[kind] then
+		 simpl_rules[kind](buf, format, cur)
+	  elseif simpl_blocks[kind] then
+		 simpl_blocks[kind](buf, format, cur, simpl_rules, simpl_blocks)
 	  else
 		 TREE.warning("Did not expect this: "..tostring(kind), block)
 	  end
@@ -1224,7 +1224,7 @@ local function sort_module_and_misc_files(node, kind, do_action, do_block, data)
 	  data.misc_files[#data.misc_files+1] = node
    end
 end
-tree_write_newpol.sort_module_and_misc_files = sort_module_and_misc_files
+simpl_write.sort_module_and_misc_files = sort_module_and_misc_files
 
 -------------------------------------------------------------------------------
 local function get_dirs_and_filename_from_full_path(full_path, common_path)
@@ -1304,7 +1304,7 @@ local function write_misc_files(misc_files, common_path, out_dir, format)
 	  end
    end
 end
-tree_write_newpol.misc_files = write_misc_files
+simpl_write.misc_files = write_misc_files
 
 local function write_modules(modules, common_path, out_dir, format)
    for mod,modtab in pairs(modules) do
@@ -1333,7 +1333,7 @@ local function write_modules(modules, common_path, out_dir, format)
 	  end
    end
 end
-tree_write_newpol.write_modules = write_modules
+simpl_write.write_modules = write_modules
 
 -------------------------------------------------------------------------------
 local function add_order_helper(node, order_kind, order_flavor, filename, order)
@@ -1471,8 +1471,8 @@ end
 
 -------------------------------------------------------------------------------
 
-local function write_newpol(head, out_dir, verbose)
-   MSG.verbose_out("\nWrite Newpol from Refpolicy", verbose, 0)
+local function write_simpl(head, out_dir, verbose)
+   MSG.verbose_out("\nWrite SIMPL from Refpolicy", verbose, 0)
 
    if out_dir then
 	  f = io.open(out_dir,"r")
@@ -1514,7 +1514,7 @@ local function write_newpol(head, out_dir, verbose)
    write_misc_files(misc_files, common_path, out_dir, format)
    write_modules(modules, common_path, out_dir, format)
 end
-tree_write_newpol.write_newpol = write_newpol
+simpl_write.write_simpl = write_simpl
 
 -------------------------------------------------------------------------------
-return tree_write_newpol
+return simpl_write
