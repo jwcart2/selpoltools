@@ -1,4 +1,29 @@
 
+# CATEGORIES
+#  Category, List of categories enclosed in {}
+#  Category ranges are enclosed in []
+CAT1
+{CAT1 CAT3}
+{[CAT1 CAT4]}
+
+# LEVEL
+#  Sensitivity, Sensitivity and CATEGORIES enclosed in {}
+SENS1
+{SENS1 {CAT1 [CAT3 CAT8]}}
+
+# RANGE
+#  One or two levels enclosed in {}
+SENS1
+{SENS1 {CAT1 [CAT3 CAT8]}}
+{SENS1 SENS2}
+{{SENS1 {[CAT1 CAT4] CAT5}} {SENS2 {[CAT1 CAT5] CAT6}}}
+
+# CONTEXT
+#  User, role, type, and RANGE enclosed in {}
+#  Can also be {} which means no context
+{}
+{USER1 ROLE1 TYPE1 {SENS1 {SENS2 {CAT1 CAT2}}}}
+
 handleunknown ACTION;
   -- Where ACTION = allow|deny|reject
 
