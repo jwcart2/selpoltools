@@ -171,6 +171,14 @@ local function get_call_decls(node, kind, do_action, do_block, data)
 end
 
 -------------------------------------------------------------------------------
+local function skip_modules(node, kind, do_action, do_block, data)
+   local block = NODE.get_block(node)
+   local kind = NODE.get_kind(block)
+   if kind ~= "module" then
+	  TREE.walk_normal_tree(block, do_action, data)
+   end
+end
+
 local function get_declarations_from_block(block, expanded, verbose, warnings)
    local block_actions = {
 	  ["bool"] = get_bool_decl,
@@ -184,7 +192,7 @@ local function get_declarations_from_block(block, expanded, verbose, warnings)
 	  ["sensitivity"] = get_sensitivity_decl,
 	  ["category"] = get_category_decl,
 	  ["macro"] = skip,
-	  ["module"] = skip,
+	  ["file"] = skip_modules,
    }
    if not expanded then
 	  block_actions["call"] = get_call_decls
@@ -197,12 +205,15 @@ end
 
 local function get_declarations_from_module(node, kind, do_action, do_block, data)
    local block = NODE.get_block(node)
-   local decls = get_declarations_from_block(block, data.expanded, data.verbose,
-											 data.warnings)
-   local mod_data = NODE.get_data(node)
-   local name = mod_data[1]
-   data.mod[name] = decls
-   add_decls_to_all(data.all, decls, name, data.conflicting, data.verbose, data.warnings)
+   local kind = NODE.get_kind(block)
+   if kind == "module" then
+	  local mod_data = NODE.get_data(block)
+	  local name = mod_data[1]
+	  local decls = get_declarations_from_block(block, data.expanded, data.verbose,
+												data.warnings)
+	  data.mod[name] = decls
+	  add_decls_to_all(data.all, decls, name, data.conflicting, data.verbose)
+   end
 end
 
 -------------------------------------------------------------------------------
@@ -216,7 +227,7 @@ local function get_declarations(head, expanded, verbose)
 
    local decl_action = {
 	  ["macro"] = skip,
-	  ["module"] = get_declarations_from_module,
+	  ["file"] = get_declarations_from_module,
    }
    local data = {all=all_decls, mod=mod_decls, expanded=expanded,
 				 conflicting=conflicting, verbose=verbose, warnings=warnings}

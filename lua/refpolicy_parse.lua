@@ -1294,6 +1294,32 @@ local function parse_macro_call(state, name, cur, node)
    return node
 end
 
+local function parse_m4_module(state, kind, cur, node)
+   if NODE.get_kind(cur) ~= false then
+	  error_message(state, "Module statement must be first in the file")
+   end
+   node_set_kind(node, "module")
+   tree_add_node(cur, node)
+   get_expected(state, "(")
+   local name = lex_get(state.lex)
+   local filename = LEX.filename(state.lex)
+   local s,e,module_name = string.find(filename,"[%w%_%-]+/([%w%_%-]+)%.%w%w$")
+   if name ~= module_name then
+	  warning_message(state, "Module name "..tostring(name)..
+					  " is not the same as filename "..tostring(module_name), 0)
+   end
+   if lex_peek(state.lex) == "," then
+	  -- skip module version, if present
+	  get_expected(state, ",")
+	  while lex_peek(state.lex) ~= ")" do
+		 lex_get(state.lex)
+	  end
+   end
+   get_expected(state, ")")
+   node_set_data(node, {name})
+   return node
+end
+
 -------------------------------------------------------------------------------
 local function skip_block_common(state, right)
    local t = lex_get(state.lex)
@@ -1573,32 +1599,6 @@ local function parse_m4_macro_block(state, kind, cur, node, parse_func)
    return node
 end
 
-local function parse_m4_module_block(state, kind, cur, node, parse_func)
-   node_set_kind(node, "module")
-   tree_add_node(cur, node)
-   get_expected(state, "(")
-   local name = lex_get(state.lex)
-   local filename = LEX.filename(state.lex)
-   local s,e,module_name = string.find(filename,"[%w%_%-]+/([%w%_%-]+)%.%w%w$")
-   if name ~= module_name then
-	  warning_message(state, "Module name "..tostring(name)..
-					  " is not the same as filename "..tostring(module_name), 0)
-   end
-   if lex_peek(state.lex) == "," then
-	  -- skip module version, if present
-	  get_expected(state, ",")
-	  while lex_peek(state.lex) ~= ")" do
-		 lex_get(state.lex)
-	  end
-   end
-   get_expected(state, ")")
-   node_set_data(node, {name})
-   local notallowed = {file=true, policy_module=true, module=true,}
-   local block = parse_func(state, node, notallowed, nil)
-   NODE.set_block(node, block)
-   return node
-end
-
 local function parse_require_block(state, kind, cur, node)
    -- role, type, attribute, attributerole, user, bool, tunable, sensitivity, category
    -- class [CLASS identifier names]
@@ -1760,11 +1760,11 @@ local rules = {
    ["require"] = parse_require_block,
    ["undefine"] = skip_block,
    ["refpolicywarn"] = parse_refpolicywarn,
+   ["policy_module"] = parse_m4_module,
+   ["module"] = parse_m4_module,
 }
 
 local blocks = {
-   ["policy_module"] =   parse_m4_module_block,
-   ["module"] =          parse_m4_module_block,
    ["ifdef"] =           parse_m4_conditional_block,
    ["ifndef"] =          parse_m4_conditional_block,
    ["tunable_policy"] =  parse_m4_conditional_block,
