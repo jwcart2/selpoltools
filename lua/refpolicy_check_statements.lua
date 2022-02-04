@@ -248,10 +248,13 @@ local function check_call(node, kind, do_action, do_block, data)
 	  if mod_name and data.name ~= mod_name then
 		 data.dependencies[data.name] = data.dependencies[data.name] or {}
 		 data.dependencies[data.name][mod_name] = true
-		 if data.modules[mod_name] ~= "base" and
-			(data.modules[data.name] == "base" or data.verbose > 0) then
-			local msg = TREE.compose_msg("Call outside of an optional block: "..tostring(macro_name), node)
-			MSG.warnings_buffer_add(data.warn_calls, msg)
+		 if data.modules[mod_name] ~= "base" then
+			local msg = TREE.compose_msg("  "..tostring(macro_name), node)
+			if data.modules[data.name] == "base" then
+			   MSG.warnings_buffer_add(data.warn_base_calls, msg)
+			else
+			   MSG.warnings_buffer_add(data.warn_nonbase_calls, msg)
+			end
 		 end
 	  end
    end
@@ -344,18 +347,30 @@ local function check_statements_in_policy(head, all_decls, mod_decls, macro_defs
 
    local dependencies = {}
    local warn_decls = {}
-   local warn_calls = {}
+   local warn_base_calls = {}
+   local warn_nonbase_calls = {}
    local data = {flavors=statement_flavors, actions=statement_actions, all=all_decls,
 				 mod=mod_decls, macros=macro_defs, modules=modules, in_optional=false,
 				 dependencies=dependencies, verbose=verbose, warn_decls=warn_decls,
-				 warn_calls=warn_calls}
+				 warn_base_calls=warn_base_calls, warn_nonbase_calls=warn_nonbase_calls}
 
    local actions = {
 	  ["file"] = check_file,
    }
    TREE.walk_normal_tree(head, actions, data)
+
    MSG.warnings_buffer_write(warn_decls)
-   MSG.warnings_buffer_write(warn_calls)
+
+   if next(warn_base_calls) then
+	  MSG.warning("Call to macro declared in a non-base module in a base module outside of an optional block:")
+	  MSG.warnings_buffer_write(warn_base_calls)
+   end
+
+   if verbose > 2 and next(warn_nonbase_calls) then
+	  MSG.warning("Call to macro declared in a non-base module in a non-base module outside of an optional block:")
+	  MSG.warnings_buffer_write(warn_nonbase_calls)
+   end
+
    return dependencies
 end
 refpolicy_check_statements.check_statements_in_policy = check_statements_in_policy

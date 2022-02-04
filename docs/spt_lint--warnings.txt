@@ -145,9 +145,11 @@ DETAILED LIST OF WARNING
 	 - Found a rule that should not be in the block being parsed
 	 - Expected the start of a file, but got a token
 	 - Failed to open the build.conf file
+	 - Failed to open the module.conf file
+	 - Failed to open file to get the comments
+	 - Failed to open file to get the interface and template parameter information
 
 	 [Warnings]
-	 - Failed to open the module.conf file
 	 - Stray "/" in fc file
 	 - Found ifelse block (Which is m4 and not Refpolicy)
 	 - Module name is not the same as filename
@@ -183,6 +185,8 @@ DETAILED LIST OF WARNING
 	   module and used in a different non-base module.
 	 - Identifier is declared more than once and in different files.
 	 - Non-base modules needed by base modules
+	 - Call to macro declared in a non-base module in a base module outside of an
+	   optional block
 
 	 Verbosity Level 1
 
@@ -241,3 +245,5 @@ DETAILED LIST OF WARNING
 	 - Base modules needed by other base modules
 	 - Base modules needed by non-base modules
 	 - Use of quotes in gen_tunable() block. They are not needed, but seem to work
+	 - Call to macro declared in a non-base module in a non-base module outside of
+	   an optional block
