@@ -11,7 +11,7 @@ local function parse_modules_conf(file)
    local f = io.open(file)
    if not f then
 	  file = file or "(nil)"
-	  MSG.warning("Failed to open the module.conf file at "..tostring(file))
+	  MSG.error_message("Failed to open the module.conf file at "..tostring(file))
 	  return nil, nil
    end
    for l in f:lines() do

@@ -12,7 +12,7 @@ local function get_param_info_from_file(file, mdefs)
    local f = io.open(file)
    if not f then
 	  file = file or "(nil)"
-	  MSG.warning("Failed to open file: "..tostring(file))
+	  MSG.error_message("Failed to open file: "..tostring(file))
 	  return
    end
    local optional = 0

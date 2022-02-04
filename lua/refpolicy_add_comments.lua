@@ -14,7 +14,7 @@ local function get_comments_from_file(node, kind, do_action, do_block, data)
    local f = io.open(file)
    if not f then
 	  file = file or "(nil)"
-	  MSG.warning("Failed to open file: "..tostring(file))
+	  MSG.error_message("Failed to open file: "..tostring(file))
 	  return
    end
    local comments = {}
