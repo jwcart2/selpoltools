@@ -44,7 +44,7 @@ end
 
 -------------------------------------------------------------------------------
 local function process_classpermset_rule(node, kind, do_action, do_block, data)
-   MSG.warning("No support for classpermset")
+   MSG.warnings_buffer_add(data.warnings, "No support for classpermset")
 end
 
 local function process_constrain_rule(node, kind, do_action, do_block, data)
@@ -84,7 +84,8 @@ end
 local function process_defs(head, verbose, defs)
    MSG.verbose_out("\nProcess defs", verbose, 0)
 
-   local def_data = {verbose=verbose, defs=defs}
+   local warnings = {}
+   local def_data = {verbose=verbose, defs=defs, warnings=warnings}
    local def_action = {
 	  ["classpermset"] = process_classpermset_rule,
 	  ["constrain"] = process_constrain_rule,
@@ -101,6 +102,8 @@ local function process_defs(head, verbose, defs)
    }
 
    TREE.walk_normal_tree(NODE.get_block_1(head), def_action, def_data)
+
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_defs_process.process_defs = process_defs
 

@@ -40,8 +40,8 @@ local function check_macro_used_not_declared(node, kind, do_action, do_block, da
 		 for val,_ in pairs(values) do
 			if not d[val] and not exp_args[val] and val ~= "object_r" then
 			   if flavor ~= "bool" or not all_tunables[val] then
-				  TREE.warning("Used but not declared: "..
-							   tostring(flavor).." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Used but not declared: "..tostring(flavor).." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -60,8 +60,10 @@ local function check_used_not_declared(head, all_decls, verbose)
 	  ["macro"] = check_macro_used_not_declared,
    }
 
-   local data = {file_action=file_action, all_decls=all_decls}
+   local warnings = {}
+   local data = {file_action=file_action, all_decls=all_decls, warnings=warnings}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_used_not_declared = check_used_not_declared
 
@@ -80,8 +82,8 @@ local function check_macro_required_not_declared(node, kind, do_action, do_block
 		 for val,_ in pairs(values) do
 			if not d[val] and not exp_args[val] then
 			   if flavor ~= "bool" or not all_tunables[val] then
-				  TREE.warning("Required but not declared: "..
-							   tostring(flavor).." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Required but not declared: "..tostring(flavor).." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -100,8 +102,10 @@ local function check_required_not_declared(head, all_decls, verbose)
 	  ["macro"] = check_macro_required_not_declared,
    }
 
-   local data = {file_action=file_action, all_decls=all_decls}
+   local warnings = {}
+   local data = {file_action=file_action, all_decls=all_decls, warnings=warnings}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_required_not_declared = check_required_not_declared
 
@@ -131,8 +135,8 @@ local function check_macro_used_not_required(node, kind, do_action, do_block, da
 		 for val,_ in pairs(values) do
 			if not exp_args[val] and not d[val] and val ~= "system_r" then
 			   if not r[val] then
-				  TREE.warning("Used but not required: "..
-							   tostring(flavor).." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Used but not required: "..tostring(flavor).." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -153,9 +157,11 @@ local function check_used_not_required(head, mod_decls, modules, verbose)
 	  ["macro"] = check_macro_used_not_required,
    }
 
+   local warnings = {}
    local data = {mod_decls=mod_decls, modules=modules, verbose=verbose,
-				 file_action=file_action}
+				 warnings=warnings, file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_used_not_required = check_used_not_required
 
@@ -181,8 +187,8 @@ local function check_macro_required_not_used(node, kind, do_action, do_block, da
 		 for val,_ in pairs(values) do
 			if not u[val] then
 			   if flavor ~= "bool" or not all_tunables[val] then
-				  TREE.warning("Required but not used: "..
-							   tostring(flavor).." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Required but not used: "..tostring(flavor).." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -203,9 +209,11 @@ local function check_required_not_used(head, all_decls, modules, verbose)
 	  ["macro"] = check_macro_required_not_used,
    }
 
+   local warnings = {}
    local data = {all_decls=all_decls, modules=modules, verbose=verbose,
-				 file_action=file_action}
+				 warnings=warnings, file_action=file_action}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_required_not_used = check_required_not_used
 
@@ -232,12 +240,12 @@ local function check_macro_used_not_declared_module(node, kind, do_action, do_bl
 		 local ad = all_decls[flavor] or {}
 		 for val,_ in pairs(values) do
 			if ad[val] and not md[val] then
-			   TREE.warning("Used but not declared in module: "..
-							tostring(flavor).." "..tostring(val), node)
+			   local msg = TREE.compose_msg("Used but not declared in module: "..tostring(flavor).." "..tostring(val), node)
+			   MSG.warnings_buffer_add(data.warnings, msg)
 			elseif flavor == "bool" then
 			   if all_tunables[val] and not mod_tunables[val] then
-				  TREE.warning("Used but not declared in module: "..
-							   "tunable".." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Used but not declared in module: ".."tunable".." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -258,9 +266,11 @@ local function check_used_not_declared_module(head, all_decls, mod_decls, module
 	  ["macro"] = check_macro_used_not_declared_module,
    }
 
+   local warnings = {}
    local data = {all_decls=all_decls, mod_decls=mod_decls, modules=modules,
-				 file_action=file_action}
+				 file_action=file_action, warnings=warnings}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_used_not_declared_module = check_used_not_declared_module
 
@@ -286,12 +296,12 @@ local function check_macro_required_not_declared_module(node, kind, do_action, d
 		 local ad = all_decls[flavor] or {}
 		 for val,_ in pairs(values) do
 			if ad[val] and not md[val] then
-			   TREE.warning("Required but not declared in module: "..
-							tostring(flavor).." "..tostring(val), node)
+			   local msg = TREE.compose_msg("Required but not declared in module: "..tostring(flavor).." "..tostring(val), node)
+			   MSG.warnings_buffer_add(data.warnings, msg)
 			elseif flavor == "bool" then
 			   if all_tunables[val] and not mod_tunables[val] then
-				  TREE.warning("Required but not declared in module: "..
-							   "tunable".." "..tostring(val), node)
+				  local msg = TREE.compose_msg("Required but not declared in module: ".."tunable".." "..tostring(val), node)
+				  MSG.warnings_buffer_add(data.warnings, msg)
 			   end
 			end
 		 end
@@ -313,9 +323,11 @@ local function check_required_not_declared_module(head, all_decls, mod_decls, mo
 	  ["macro"] = check_macro_required_not_declared_module,
    }
 
+   local warnings = {}
    local data = {all_decls=all_decls, mod_decls=mod_decls, modules=modules,
-				 file_action=file_action}
+				 file_action=file_action, warnings=warnings}
    TREE.walk_normal_tree(head, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_check_requires.check_required_not_declared_module =
    check_required_not_declared_module
@@ -368,14 +380,12 @@ local function check_macro_satisfied_externally(node, kind, do_action, do_block,
 
    if satisfied then
 	  local name = MACRO.get_def_name(node)
-	  TREE.warning("Requires block satisfied external to module for macro: "..
-				   tostring(name), node)
+	  local msg = TREE.compose_msg("Requires block satisfied external to module for macro: "..tostring(name), node)
 	  if data.verbose > 0 then
 		 for f,fd in pairs(decl_mods) do
 			for v,vd in pairs(fd) do
 			   for mod,_ in pairs(vd) do
-				  MSG.warning("  Require "..tostring(f).." "..tostring(v)..
-							  " is declared in module:"..tostring(mod))
+				  msg = msg.."\n  Require "..tostring(f).." "..tostring(v).." is declared in module:"..tostring(mod)
 			   end
 			end
 		 end
@@ -383,15 +393,16 @@ local function check_macro_satisfied_externally(node, kind, do_action, do_block,
 	  if data.verbose > 1 then
 		 local calls = data.calls or {}
 		 if not calls[name] then
-			MSG.warning("  The macro is not called in policy")
+			msg = msg.."\n  The macro is not called in policy"
 		 else
-			MSG.warning("  The macro is called in the following places:")
+			msg = msg.."\n  The macro is called in the following places:"
 			local call_data = calls[name]
 			for i=1,#call_data do
-			   TREE.warning("    ",call_data[i])
+			   msg = msg.."\n"..TREE.compose_msg("    ",call_data[i])
 			end
 		 end
 	  end
+	  MSG.warnings_buffer_add(data.warnings, msg)
    end
 end
 
@@ -404,9 +415,11 @@ local function check_requires_satisfied_externally(start, all_decls, calls, verb
 	  ["macro"] = check_macro_satisfied_externally,
    }
 
+   local warnings = {}
    local data = {verbose=verbose, all_decls=all_decls, calls=calls,
-				 file_action=file_action}
+				 file_action=file_action, warnings=warnings}
    TREE.walk_normal_tree(start, do_action, data)
+   MSG.warnings_buffer_write(warnings)
 end
 
 local function check_inactive_requires_satisfied_externally(head, all_decls, mod_decls,

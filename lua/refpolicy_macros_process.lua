@@ -117,7 +117,7 @@ local function get_flavors_and_args_from_used(used)
    return flavors, args, max_arg, compound
 end
 
-local function report_and_fix_parameter_holes(flavors, max, name, node, verbose)
+local function report_and_fix_parameter_holes(flavors, max, name, node, warn_unused)
    -- Reports holes in macro parameters. ex/ Has $2, but no $1
    local param_info = MACRO.get_def_param_info(node)
    local num_unused = param_info[2]
@@ -128,21 +128,20 @@ local function report_and_fix_parameter_holes(flavors, max, name, node, verbose)
 		 if num_unused > 0 then
 			num_unused = num_unused - 1
 		 else
-			local param = "$"..tostring(i)
-			TREE.warning("Unused macro parameter: "..param.." in "..tostring(name).."()",
-						 node)
+			local msg = TREE.compose_msg("Unused macro parameter: $"..tostring(i).." in "..tostring(name).."()", node)
+			MSG.warnings_buffer_add(warn_unused, msg)
 		 end
 	  end
    end
 end
 
-local function prepare_ready_defs(mdefs, def_calls, call_defs, verbose)
+local function prepare_ready_defs(mdefs, def_calls, call_defs, warn_no_def, warn_unused)
    local ready = {}
    for name, calltab in pairs(def_calls) do
 	  if not next(calltab) then
 		 local mdef = mdefs[name]
 		 if not mdef then
-			TREE.warning1(verbose, "No macro def for "..tostring(name), nil)
+			MSG.warnings_buffer_add(warn_no_def, "No macro def for "..tostring(name))
 		 end
 		 local used = MACRO.get_def_used(mdef)
 		 local decls = MACRO.get_def_decls(mdef)
@@ -152,7 +151,7 @@ local function prepare_ready_defs(mdefs, def_calls, call_defs, verbose)
 		 local orig_flavors, exp_args, max_arg, cmpd_args
 			= get_flavors_and_args_from_used(used)
 		 if #orig_flavors ~= max_arg then
-			report_and_fix_parameter_holes(orig_flavors, max_arg, name, mdef, verbose)
+			report_and_fix_parameter_holes(orig_flavors, max_arg, name, mdef, warn_unused)
 		 end
 		 MACRO.set_def_orig_flavors(mdef, orig_flavors)
 		 MACRO.set_def_exp_args(mdef, exp_args)
@@ -216,7 +215,7 @@ local function handle_pass_through_args(flavors, call_node)
 end
 
 local function report_wrong_number_of_args(args, flavors, call_name, call_node,
-										   def_node, verbose)
+										   def_node, verbose, warn_less, warn_more)
    local param_info = MACRO.get_def_param_info(def_node)
    local num_optional = param_info[1]
    local num_unused = param_info[2]
@@ -234,8 +233,9 @@ local function report_wrong_number_of_args(args, flavors, call_name, call_node,
 		 -- Expected
 		 return
 	  end
-	  TREE.warning("Call has less arguments then needed: "..
-				   tostring(call_name).."()",call_node)
+	  local msg = TREE.compose_msg("Call has less arguments then needed: "..
+								   tostring(call_name).."()", call_node)
+	  MSG.warnings_buffer_add(warn_less, msg)
    else
 	  if string.find(call_name, "stub") and num == 1 and verbose < 2 then
 		 -- Expected
@@ -244,8 +244,9 @@ local function report_wrong_number_of_args(args, flavors, call_name, call_node,
 	  if verbose < 1 and (num - num_unused <= 0) then
 		 return
 	  end
-	  TREE.warning("Call has more arguments then needed: "..
-				   tostring(call_name).."()",call_node)
+	  local msg = TREE.compose_msg("Call has more arguments then needed: "..
+								   tostring(call_name).."()", call_node)
+	  MSG.warnings_buffer_add(warn_more, msg)
    end
 end
 
@@ -305,7 +306,7 @@ local function create_call_exp_args(exp_args, trans_tab)
    return call_exp_args
 end
 
-local function process_defs(ready, def_calls, call_defs, verbose)
+local function process_defs(ready, def_calls, call_defs, verbose, warn_less, warn_more)
    for call_name, call_def_node in pairs(ready) do
 	  def_calls[call_name] = nil
 	  local orig_flavors = MACRO.get_def_orig_flavors(call_def_node)
@@ -322,7 +323,8 @@ local function process_defs(ready, def_calls, call_defs, verbose)
 			end
 			if #orig_args ~= #orig_flavors then
 			   report_wrong_number_of_args(orig_args, orig_flavors, call_name,
-										   call_node, call_def_node, verbose)
+										   call_node, call_def_node,
+										   verbose, warn_less, warn_more)
 			end
 			local trans_tab = create_trans_table(orig_args)
 			local call_decls = create_call_decls(decls, trans_tab)
@@ -343,7 +345,7 @@ local function process_defs(ready, def_calls, call_defs, verbose)
 end
 
 -------------------------------------------------------------------------------
-local function process_calls_outside(calls, mdefs, verbose)
+local function process_calls_outside(calls, mdefs, verbose, warn_less, warn_more)
    for name, call_list in pairs(calls) do
 	  if not mdefs[name] then
 		 for _,call in pairs(call_list) do
@@ -359,7 +361,7 @@ local function process_calls_outside(calls, mdefs, verbose)
 			local orig_args = MACRO.get_call_orig_args(call)
 			if #orig_args ~= #orig_flavors then
 			   report_wrong_number_of_args(orig_args, orig_flavors, name, call,
-										   mdef, verbose)
+										   mdef, verbose, warn_less, warn_more)
 			end
 			local trans_tab = create_trans_table(orig_args)
 			local call_decls = create_call_decls(def_decls, trans_tab)
@@ -374,21 +376,31 @@ end
 -------------------------------------------------------------------------------
 local function process_macro_calls(mdefs, calls_out, verbose)
    MSG.verbose_out("\nProcess macro calls", verbose, 0)
-
+   local warn_no_def = {}
+   local warn_unused = {}
+   local warn_less = {}
+   local warn_more = {}
+   local warn_not_finished = {}
    local def_calls, call_defs = create_def_and_call_tables(mdefs)
    while next(def_calls) do
-	  local ready = prepare_ready_defs(mdefs, def_calls, call_defs, verbose)
-	  process_defs(ready, def_calls, call_defs, verbose)
+	  local ready = prepare_ready_defs(mdefs, def_calls, call_defs, warn_no_def,
+									   warn_unused)
+	  process_defs(ready, def_calls, call_defs, verbose, warn_less, warn_more)
 	  if not next(ready) and next(def_calls) then
-		 MSG.warning("Unable to process any more macros")
-		 MSG.warning("The following macros were not processed:")
 		 for macro, _ in pairs(def_calls) do
-			TREE.warning("  "..tostring(macro).."()")
+			MSG.warning_add(warn_not_finished, "  "..tostring(macro).."()")
 		 end
 	  end
    end
-
-   process_calls_outside(calls_out, mdefs, verbose)
+   process_calls_outside(calls_out, mdefs, verbose, warn_less, warn_more)
+   if next(warn_not_finished) then
+	   MSG.warning("The following macros could not be processed:")
+	   MSG.warnings_buffer_write(warn_not_finished)
+   end
+   MSG.warnings_buffer_write1(verbose, warn_no_def)
+   MSG.warnings_buffer_write(warn_unused)
+   MSG.warnings_buffer_write(warn_less)
+   MSG.warnings_buffer_write(warn_more)
 end
 refpolicy_macros_process.process_macro_calls = process_macro_calls
 

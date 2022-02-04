@@ -20,10 +20,11 @@ local function find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, file_
    NODE.set_data(file_node, {file_name})
    local top = NODE.create(false, false, false, false)
    local cur = top
+   local warnings = {}
    for name, call_list in pairs(calls) do
 	  if not mdefs[name] and not inactive_mdefs[name] then
-		 MSG.verbose_out("Creating macro definition for "..tostring(name).."()",
-						 verbose, 1)
+		 local msg = "Creating macro definition for "..tostring(name).."()"
+		 MSG.warnings_buffer_add(warnings, msg)
 		 local mdef = NODE.create("macro", file_node, file_name, lineno)
 		 mdefs[name] = mdef
 		 local num_args = -1
@@ -50,6 +51,7 @@ local function find_and_add_undefined_macros(mdefs, inactive_mdefs, calls, file_
    if TREE.next_node(top) then
 	  NODE.set_block(file_node, TREE.next_node(top))
    end
+   MSG.warnings_buffer_write2(verbose, warnings)
    return file_node
 end
 

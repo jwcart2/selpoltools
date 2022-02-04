@@ -48,11 +48,12 @@ local function warning_message(state, msg, level)
 	  local file = LEX.filename(state.lex)
 	  local lineno = LEX.lineno(state.lex)
 	  local node = node_create(false, false, file, lineno)
-	  TREE.warning(msg, node)
+	  MSG.warnings_buffer_add(state.warnings, TREE.compose_msg(msg, node))
    end
 end
 
 local function error_message(state, msg)
+   MSG.warnings_buffer_write(state.warnings)
    local file = LEX.filename(state.lex)
    local lineno = LEX.lineno(state.lex)
    local node = node_create(false, false, file, lineno)
@@ -1872,7 +1873,7 @@ local function parse_refpolicy_policy(active_files, inactive_files,
 
    local lex_state = LEX.create(active_files, 4)
    local state = {verbose=verbose, lex=lex_state, rules=rules, blocks=blocks,
-				  cdefs=cdefs, tunables=tunables}
+				  cdefs=cdefs, tunables=tunables, warnings={}}
 
    local block1 = parse_files(state, head)
    TREE.set_active(head, block1)
@@ -1894,6 +1895,8 @@ local function parse_refpolicy_policy(active_files, inactive_files,
 							   files, lines, tokens)
 	  MSG.verbose_out(s2, verbose, 1)
    end
+
+   MSG.warnings_buffer_write(state.warnings)
 end
 refpolicy_parse.parse_refpolicy_policy = parse_refpolicy_policy
 

@@ -22,7 +22,7 @@ local function set_to_sorted_list(set)
    return list
 end
 
-local function expand_set(sets, name, inprogress, done)
+local function expand_set(sets, name, inprogress, done, warnings)
    local found_set = false
    for e,_ in pairs(sets[name]) do
 	  if sets[e] then
@@ -35,11 +35,11 @@ local function expand_set(sets, name, inprogress, done)
 		 if sets[e] then
 			if not done[e] then
 			   if inprogress[e] then
-				  MSG.warning("Recursive definition in set "..tostring(name)..
-							  " involving "..tostring(e))
+				  local msg = "Recursive definition in set "..tostring(name).." involving "..tostring(e)
+				  MSG.warnings_buffer_add(warnings, msg)
 			   end
 			   inprogress[e] = true
-			   expand_set(sets, e, inprogress, done)
+			   expand_set(sets, e, inprogress, done, warnings)
 			   inprogress[e] = false
 			end
 			for e2,_ in pairs(sets[e]) do
@@ -74,23 +74,25 @@ local function collect_def(node, kind, do_action, do_block, data)
    local name= node_data[1]
    if string.find(name, "_class_set$") then
 	  if data.class_sets[name] then
-		 MSG.warning(lex_state, "Duplicate definition of class obj_perm_set "..
-					 tostring(name))
+		 local msg = "Duplicate definition of class obj_perm_set "..tostring(name)
+		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
 	  data.class_sets[name] = list_to_set(node_data[2])
    elseif string.find(name, "_perms$") then
 	  if data.perm_sets[name] then
-		 MSG.warning(lex_state, "Duplicate definition of permission obj_perm_set "..
-					 tostring(name))
+		 local msg = "Duplicate definition of permission obj_perm_set "..tostring(name)
+		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
 	  data.perm_sets[name] = list_to_set(node_data[2])
    elseif string.find(name, "basic_ubac_conditions") then
 	  if data.cstr_defs[name] then
-		 MSG.warning(lex_state, "Duplicate definition of  "..tostring(name))
+		 local msg = "Duplicate definition of  "..tostring(name)
+		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
 	  data.cstr_defs[name] = node_data[2]
    else
-	  MSG.warning(lex_state, "Found unknown def called "..tostring(name))
+	  local msg = "Found unknown def called "..tostring(name)
+	  MSG.warnings_buffer_add(data.warnings, msg)
    end
 end
 
@@ -98,12 +100,16 @@ end
 local function collect_defs(head, verbose)
    MSG.verbose_out("\nCollect defs", verbose, 0)
 
-   local def_data = {verbose=verbose, class_sets={}, perm_sets={}, cstr_defs={}}
+   local warnings = {}
+   local def_data = {verbose=verbose, class_sets={}, perm_sets={}, cstr_defs={},
+					 warnings=warnings}
    local def_action = {
 	  ["def"] = collect_def,
    }
 
    TREE.walk_normal_tree(NODE.get_block_1(head), def_action, def_data)
+
+   MSG.warnings_buffer_write(warnings)
 
    local class_sets_lists = sets_to_flattened_lists(def_data.class_sets)
    local perm_sets_lists = sets_to_flattened_lists(def_data.perm_sets)

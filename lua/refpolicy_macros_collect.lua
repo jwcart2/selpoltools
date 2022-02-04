@@ -19,8 +19,9 @@ local function add_macro_def(node, kind, do_action, do_block, data)
    }
    local name = MACRO.get_def_name(node)
    if name and data.mdefs[name] then
-	  TREE.warning("Duplicate macro def", node)
-	  TREE.warning("  Previously declared at", data.mdefs[name])
+	  local msg = TREE.compose_msg("Duplicate macro def", node)
+	  msg = msg..TREE.compose_msg("\n  Previously declared at", data.mdefs[name])
+	  MSG.warnings_buffer_add(data.warnings, msg)
 	  return
    end
    data.mdefs[name] = node
@@ -44,7 +45,8 @@ end
 local function collect_active_macros(head, verbose)
    MSG.verbose_out("\nCollect active macro definitions and calls", verbose, 0)
 
-   local data = {verbose=verbose, mdefs={}, calls={}, calls_out={}}
+   local warnings = {}
+   local data = {mdefs={}, calls={}, calls_out={}, warnings=warnings}
    local macro_action = {
 	  ["macro"] = add_macro_def,
 	  ["call"] = add_macro_call_outside,
@@ -52,6 +54,7 @@ local function collect_active_macros(head, verbose)
 
    head = TREE.get_head(head)
    TREE.walk_normal_tree(head, macro_action, data)
+   MSG.warnings_buffer_write(warnings)
 
    -- mdefs     - All macro definitions mdefs
    --               [DEF_NAME] = def_node
@@ -67,8 +70,9 @@ refpolicy_macros_collect.collect_active_macros = collect_active_macros
 local function add_inactive_macro_def(node, kind, do_action, do_block, data)
    local name = MACRO.get_def_name(node)
    if name and data.mdefs[name] then
-	  TREE.warning1(data.verbose, "Duplicate macro def", node)
-	  TREE.warning1(data.verbose, "  Previously declared at", data.mdefs[name])
+	  local msg = TREE.compose_msg("Duplicate macro def", node)
+	  msg = msg..TREE.compose_msg("\n  Previously declared at", data.mdefs[name])
+	  MSG.warnings_buffer_add(data.warnings, msg)
 	  return
    end
    data.mdefs[name] = node
@@ -77,7 +81,8 @@ end
 local function collect_inactive_macros(head, verbose)
    MSG.verbose_out("\nCollect inactive macro definitions", verbose, 0)
 
-   local data = {verbose=verbose, mdefs={}}
+   local warnings = {}
+   local data = {verbose=verbose, mdefs={}, warnings=warnings}
    local macro_action = {
 	  ["macro"] = add_inactive_macro_def,
    }
@@ -88,6 +93,8 @@ local function collect_inactive_macros(head, verbose)
    TREE.walk_normal_tree(head, macro_action, data)
    TREE.disable_inactive(head)
    TREE.enable_active(head)
+
+   MSG.warnings_buffer_write1(verbose, warnings)
 
    -- mdefs     - All inactive macro definitions defs
    --               [DEF_NAME] = def_node

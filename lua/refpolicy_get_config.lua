@@ -34,7 +34,7 @@ local function parse_modules_conf(file)
 end
 refpolicy_get_config.parse_modules_conf = parse_modules_conf
 
-local function get_module_files(module_conf_file, prefix, file_list)
+local function get_module_files(module_conf_file, prefix, file_list, warnings)
    local seen = {}
    local modules = {}
    local module_values, module_names = parse_modules_conf(module_conf_file)
@@ -52,14 +52,15 @@ local function get_module_files(module_conf_file, prefix, file_list)
 	  local name = module_names[i]
 	  local value = module_values[name]
 	  if seen[name] then
-		 MSG.warning("Module "..tostring(name).." is listed more than once")
+		 local msg = "Module "..tostring(name).." is listed more than once"
+		 MSG.warnings_buffer_add(warnings, msg)
 		 value = "off"
 	  end
 	  local layer
 	  seen[name] = true
 	  if value ~= "off" and value ~= "base" and value ~= "module" then
-		 MSG.warning("Module "..tostring(name).." is declared as \""..tostring(value)..
-					 "\" which is not valid")
+		 local msg = "Module "..tostring(name).." is declared as \""..tostring(value).."\" which is not valid"
+		 MSG.warnings_buffer_add(warnings, msg)
 		 value = "off"
 	  end
 	  if value == "base" or value == "module" then
@@ -84,7 +85,8 @@ local function get_module_files(module_conf_file, prefix, file_list)
 			file_list[#file_list+1] = base..".if"
 			file_list[#file_list+1] = base..".te"
 		 else
-			MSG.warning("Module "..tostring(name).." was not found")
+			local msg = "Module "..tostring(name).." was not found"
+			MSG.warnings_buffer_add(warnings, msg)
 		 end
 	  end
    end
@@ -92,6 +94,7 @@ local function get_module_files(module_conf_file, prefix, file_list)
 end
 
 local function get_refpolicy_files(prefix)
+   local warnings = {}
    local file_list = {}
    file_list[#file_list+1] = prefix.."/policy/support/obj_perm_sets.spt"
    file_list[#file_list+1] = prefix.."/policy/flask/initial_sids"
@@ -110,7 +113,9 @@ local function get_refpolicy_files(prefix)
    file_list[#file_list+1] = prefix.."/policy/support/misc_patterns.spt"
    file_list[#file_list+1] = prefix.."/policy/support/misc_macros.spt"
    local module_conf = prefix.."/policy/modules.conf"
-   return get_module_files(module_conf, prefix, file_list)
+   local modules, file_list = get_module_files(module_conf, prefix, file_list)
+   MSG.warnings_buffer_write(warnings)
+   return modules, file_list
 end
 refpolicy_get_config.get_refpolicy_files = get_refpolicy_files
 

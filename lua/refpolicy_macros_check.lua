@@ -17,16 +17,17 @@ local function in_optional(node)
    return false
 end
 
-local function check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose)
+local function check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose, warnings)
    for name, call_list in pairs(calls) do
 	  if not mdefs[name] then
 		 if not inactive_mdefs[name] then
-			TREE.warning("No macro definition for "..tostring(name).."()", nil)
+			local msg = "No macro definition for "..tostring(name).."()"
 			if verbose > 0 then
 			   for _,call in pairs(call_list) do
-				  TREE.warning("  Called", call)
+				  msg = msg.."\n"..TREE.compose_msg("  Called", call)
 			   end
 			end
+			MSG.warnings_buffer_add(warnings, msg)
 		 else
 			local nodes = {}
 			for _,call in pairs(call_list) do
@@ -35,13 +36,13 @@ local function check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose)
 			   end
 			end
 			if next(nodes) or verbose > 1 then
-			   TREE.warning("Macro definition for "..tostring(name)..
-							"() is defined in inactive policy", nil)
+			   local msg = "Macro definition for "..tostring(name).."() is defined in inactive policy"
 			   if next(nodes) then
 				  for _, node in pairs(nodes) do
-					 TREE.warning("  Called outside optional", node)
+					 msg = msg.."\n"..TREE.compose_msg("  Called outside optional", node)
 				  end
 			   end
+			   MSG.warnings_buffer_add(warnings, msg)
 			end
 		 end
 	  end
@@ -52,7 +53,9 @@ end
 local function check_macros(mdefs, inactive_mdefs, calls, verbose)
    MSG.verbose_out("\nCheck macros", verbose, 0)
 
-   check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose)
+   local warnings = {}
+   check_for_undefined_calls(mdefs, inactive_mdefs, calls, verbose, warnings)
+   MSG.warnings_buffer_write(warnings)
 end
 refpolicy_macros_check.check_macros = check_macros
 

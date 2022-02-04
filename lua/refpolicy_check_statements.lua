@@ -52,15 +52,16 @@ end
 
 -------------------------------------------------------------------------------
 local function check_skip(flavor, value, all_decls, mod_decls, mod_name,
-						  modules, dependencies, verbose)
+						  modules, dependencies, verbose, warnings)
 end
 
 local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mod_name,
-								   modules, dependencies, verbose)
+								   modules, dependencies, verbose, warnings)
    if type(value) ~= "table" then
 	  local all_flav_decls = all_decls[flavor]
 	  if not all_flav_decls then
-		 TREE.warning("No declarations in policy for flavor "..tostring(flavor), node)
+		 local msg = TREE.compose_msg("No declarations in policy for flavor "..tostring(flavor), node)
+		 MSG.warnings_buffer_add(warnings, msg)
 		 return
 	  end
 	  if not all_flav_decls[value] then
@@ -70,8 +71,8 @@ local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mo
 		 if flavor == "role" and value == "object_r" then
 			return
 		 end
-		 TREE.warning("Not declared in policy: "..tostring(flavor)..
-					  " "..tostring(value), node)
+		 local msg = TREE.compose_msg("Not declared in policy: "..tostring(flavor).." "..tostring(value), node)
+		 MSG.warnings_buffer_add(warnings, msg)
 		 return
 	  end
 
@@ -99,44 +100,44 @@ local function check_simple_flavor(node, flavor, value, all_decls, mod_decls, mo
 		 end
 	  end
 
-	  TREE.warning("Not declared in module: "..tostring(flavor)..
-				   " "..tostring(value), node)
+	  local msg = TREE.compose_msg("Not declared in module: "..tostring(flavor).." "..tostring(value), node)
 	  for _,m_node in pairs(all_flav_decls[value]) do
 		 if verbose >= 1 then
-			TREE.warning("  Declared", m_node)
+			msg = msg.."\n"..TREE.compose_msg("  Declared", m_node)
 		 end
 	  end
+	  MSG.warnings_buffer_add(warnings, msg)
    else
 	  for i,v in pairs(value) do
 		 if not set_ops[v] then
 			check_simple_flavor(node, flavor, v, all_decls, mod_decls, mod_name,
-								modules, dependencies, verbose)
+								modules, dependencies, verbose, warnings)
 		 end
 	  end
    end
 end
 
 local function check_level(node, flavor, value, all_decls, mod_decls, mod_name,
-						   modules, dependencies, verbose)
+						   modules, dependencies, verbose, warnings)
    if type(value) ~= "table" then
 	  if not level_alias[value] then
 		 check_simple_flavor(node, "sensitivity", value, all_decls, mod_decls, mod_name,
-							 modules, dependencies, verbose)
+							 modules, dependencies, verbose, warnings)
 	  end
    else
 	  local sens = value[1]
 	  local cats = value[2]
 	  check_simple_flavor(node, "sensitivity", sens, all_decls, mod_decls, mod_name,
-						  modules, dependencies, verbose)
+						  modules, dependencies, verbose, warnings)
 	  if cats then
 		 check_simple_flavor(node, "category", cats, all_decls, mod_decls, mod_name,
-							 modules, dependencies, verbose)
+							 modules, dependencies, verbose, warnings)
 	  end
    end
 end
 
 local function check_range(node, flavor, value, all_decls, mod_decls, mod_name,
-						   modules, dependencies, verbose)
+						   modules, dependencies, verbose, warnings)
    if type(value) ~= "table" then
 	  check_level(node, flavor, value, all_decls, mod_decls, mod_name,
 				  modules, dependencies, verbose)
@@ -153,25 +154,27 @@ local function check_range(node, flavor, value, all_decls, mod_decls, mod_name,
 end
 
 local function check_context(node, flavor, value, all_decls, mod_decls, mod_name,
-							 modules, dependencies, verbose)
+							 modules, dependencies, verbose, warnings)
    if type(value) ~= "table" then
-	  TREE.warning("Expected context to contain a table", node)
+	  local msg = TREE.compose_msg("Expected context to contain a table", node)
+	  MSG.warnings_buffer_add(warnings, msg)
    end
    if #value == 1 then
 	  if value[1] ~= "<<none>>" then
-		 TREE.warning("Unknown context string: "..tostring(value[1]), node)
+		 local msg = TREE.compose_msg("Unknown context string: "..tostring(value[1]), node)
+		 MSG.warnings_buffer_add(warnings, msg)
 	  end
    else
 	  if value[1] ~= "system_u" then
 		 check_simple_flavor(node, "user", value[1], all_decls, mod_decls, mod_name,
-							 modules, dependencies, verbose)
+							 modules, dependencies, verbose, warnings)
 	  end
 	  if value[2] ~= "object_r" then
 		 check_simple_flavor(node, "role", value[2], all_decls, mod_decls, mod_name,
-							 modules, dependencies, verbose)
+							 modules, dependencies, verbose, warnings)
 	  end
 	  check_simple_flavor(node, "type", value[3], all_decls, mod_decls, mod_name,
-						  modules, dependencies, verbose)
+						  modules, dependencies, verbose, warnings)
 	  if value[4] then
 		 check_range(node, "range", value[4], all_decls, mod_decls, mod_name,
 					 modules, dependencies, verbose)
@@ -180,9 +183,10 @@ local function check_context(node, flavor, value, all_decls, mod_decls, mod_name
 end
 
 local function check_constraint_expr(node, flavor, value, all_decls, mod_decls, mod_name,
-									 modules, dependencies, verbose)
+									 modules, dependencies, verbose, warnings)
    if type(value) ~= "table" then
-	  TREE.warning("Expected constraint expression to contain a table", node)
+	  local msg = TREE.compose_msg("Expected constraint expression to contain a table", node)
+	  MSG.warnings_buffer_add(warnings, msg)
    end
    local f = cstr_flavors[value[1]]
    if f then
@@ -192,7 +196,7 @@ local function check_constraint_expr(node, flavor, value, all_decls, mod_decls, 
 						modules, dependencies, verbose)
 		 else
 			check_simple_flavor(node, f, value[3], all_decls, mod_decls, mod_name,
-								modules, dependencies, verbose)
+								modules, dependencies, verbose, warnings)
 		 end
 	  end
    else
@@ -246,8 +250,8 @@ local function check_call(node, kind, do_action, do_block, data)
 		 data.dependencies[data.name][mod_name] = true
 		 if data.modules[mod_name] ~= "base" and
 			(data.modules[data.name] == "base" or data.verbose > 0) then
-			TREE.warning("Call outside of an optional block: "..tostring(macro_name),
-						 node)
+			local msg = TREE.compose_msg("Call outside of an optional block: "..tostring(macro_name), node)
+			MSG.warnings_buffer_add(data.warn_calls, msg)
 		 end
 	  end
    end
@@ -260,9 +264,10 @@ local function check_call(node, kind, do_action, do_block, data)
 			if check_flavor[flavor] then
 			   check_flavor[flavor](node, flavor, call_args[i], data.all, data.mod,
 									data.name, data.modules, data.dependencies,
-									data.verbose)
+									data.verbose, data.warn_decls)
 			else
-			   TREE.warning("No function to check flavor: "..tostring(flavor), node)
+			   local msg = TREE.compose_msg("Invalid parameter flavor "..tostring(flavor), node)
+			   MSG.warnings_buffer_add(data.warn_decls, msg)
 			end
 		 else
 			for _,f in pairs(flavor) do
@@ -271,7 +276,8 @@ local function check_call(node, kind, do_action, do_block, data)
 								  data.name, data.modules, data.dependencies,
 								  data.verbose)
 			   else
-				  TREE.warning("No function to check flavor: "..tostring(f), node)
+				  local msg = TREE.compose_msg("Invalid parameter flavor "..tostring(f), node)
+				  MSG.warnings_buffer_add(data.warn_decls, msg)
 			   end
 			end
 		 end
@@ -283,7 +289,8 @@ local function check_statement(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
    local flavors = data.flavors[kind]
    if not flavors then
-	  MSG.warning("No flavors information for a "..tostring(kind).." statement")
+	  local msg = "No flavors information for a "..tostring(kind).." statement"
+	  MSG.warnings_buffer_add(data.warn_decls, msg)
 	  return
    end
    for i,flavor in pairs(flavors) do
@@ -291,7 +298,8 @@ local function check_statement(node, kind, do_action, do_block, data)
 		 check_flavor[flavor](node, flavor, node_data[i], data.all, data.mod, data.name,
 							  data.modules, data.dependencies, data.verbose)
 	  else
-		 TREE.warning("No function to check flavor: "..tostring(flavor), node)
+		 local msg = TREE.compose_msg("No function to check flavor "..tostring(flavor), node)
+		 MSG.warnings_buffer_add(data.warn_decls, msg)
 	  end
    end
 end
@@ -335,15 +343,19 @@ local function check_statements_in_policy(head, all_decls, mod_decls, macro_defs
    statement_actions["macro"] = skip
 
    local dependencies = {}
+   local warn_decls = {}
+   local warn_calls = {}
    local data = {flavors=statement_flavors, actions=statement_actions, all=all_decls,
 				 mod=mod_decls, macros=macro_defs, modules=modules, in_optional=false,
-				 dependencies=dependencies, verbose=verbose}
+				 dependencies=dependencies, verbose=verbose, warn_decls=warn_decls,
+				 warn_calls=warn_calls}
 
    local actions = {
 	  ["file"] = check_file,
    }
    TREE.walk_normal_tree(head, actions, data)
-
+   MSG.warnings_buffer_write(warn_decls)
+   MSG.warnings_buffer_write(warn_calls)
    return dependencies
 end
 refpolicy_check_statements.check_statements_in_policy = check_statements_in_policy

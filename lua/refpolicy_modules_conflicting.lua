@@ -8,55 +8,56 @@ local function list_conflicting_modules(conflicting, modules, verbose)
 	  return
    end
 
-   local results = {}
+   local warnings = {}
    for name1, module_list in pairs(conflicting) do
 	  if modules[name1] == "base" then
 		 for name2,_ in pairs(module_list) do
 			if modules[name2] == "base" then
-			   results[#results+1] = "  "..tostring(name1).." and "..tostring(name2)
+			   local msg = "  "..tostring(name1).." and "..tostring(name2)
+			   MSG.warnings_buffer_add(warnings, msg)
 			end
 		 end
 	  end
    end
-   if #results > 0 then
+   if #warnings > 0 then
 	  MSG.warning("Base modules conflicting with other base modules:")
-	  for i=1,#results do
-		 MSG.warning(results[i])
-	  end
+	  MSG.warnings_buffer_write(warnings)
+	  warnings = nil
    end
 
-   local results = {}
+   warnings = {}
    for name1, module_list in pairs(conflicting) do
 	  for name2,_ in pairs(module_list) do
 		 if modules[name1] == "base" and modules[name2] ~= "base" then
-			results[#results+1] = "  "..tostring(name2).." and "..tostring(name1)
+			local msg = "  "..tostring(name2).." and "..tostring(name1)
+			MSG.warnings_buffer_add(warnings, msg)
 		 elseif modules[name1] ~= "base" and modules[name2] == "base" then
-			results[#results+1] = "  "..tostring(name1).." and "..tostring(name2)
+			local msg = "  "..tostring(name1).." and "..tostring(name2)
+			MSG.warnings_buffer_add(warnings, msg)
 		 end
 	  end
    end
-   if #results > 0 then
+   if #warnings > 0 then
 	  MSG.warning("Non-base modules conflicting with base modules:")
-	  for i=1,#results do
-		 MSG.warning(results[i])
-	  end
+	  MSG.warnings_buffer_write(warnings)
+	  warnings = nil
    end
 
-   local results = {}
+   warnings = {}
    for name1, module_list in pairs(conflicting) do
 	  if modules[name1] ~= "base" then
 		 for name2,_ in pairs(module_list) do
 			if modules[name2] ~= "base" then
-			   results[#results+1] = "  "..tostring(name1).." and "..tostring(name2)
+			   local msg = "  "..tostring(name1).." and "..tostring(name2)
+			   MSG.warnings_buffer_add(warnings, msg)
 			end
 		 end
 	  end
    end
-   if #results > 0 then
+   if #warnings > 0 then
 	  MSG.warning("Non-base modules conflicting with other non-base modules:")
-	  for i=1,#results do
-		 MSG.warning(results[i])
-	  end
+	  MSG.warnings_buffer_write(warnings)
+	  warnings = nil
    end
 
 end
