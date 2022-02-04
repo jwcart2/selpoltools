@@ -110,33 +110,26 @@ end
 tree.disable_inactive = disable_inactive
 
 -------------------------------------------------------------------------------
-local function compose_line_and_file_string(node)
-   if not node then
-	  return ""
+local function compose_msg(msg, node)
+   msg = msg or ""
+   if node then
+	  local line = get_lineno(node) or "(?)"
+	  local path = get_filename(node) or "(?)"
+	  local s,e,mod = string.find(path,"/([%w%_%-]+/[%w%_%-]+%.%w%w)$")
+	  mod = mod or path
+	  msg = msg.." at "..mod..":"..line
    end
-   local line = get_lineno(node) or "(?)"
-   local path = get_filename(node) or "(?)"
-   local s,e,mod = string.find(path,"/([%w%_%-]+/[%w%_%-]+%.%w%w)$")
-   mod = mod or path
-   return string.format("%s:%s",mod, line)
+   return msg
 end
-tree.compose_line_and_file_string = compose_line_and_file_string
+tree.compose_msg = compose_msg
 
 local function warning(msg, node)
-   local msg = msg or ""
-   if node then
-	  msg = msg.." at "..compose_line_and_file_string(node)
-   end
-   MSG.warning(msg)
+   MSG.warning(compose_msg(msg, node))
 end
 tree.warning = warning
 
 local function verbose_warning(verbose, level, msg, node)
-   local msg = msg or ""
-   if node then
-	  msg = msg.." at "..compose_line_and_file_string(node)
-   end
-   MSG.verbose_out(msg, verbose, level)
+   MSG.verbose_out(compose_msg(msg, node), verbose, level)
 end
 tree.verbose_warning = verbose_warning
 
@@ -156,21 +149,13 @@ end
 tree.warning3 = warning3
 
 local function error_message(msg, node)
-   local msg = msg or ""
-   if node then
-	  msg = msg.." at "..compose_line_and_file_string(node)
-   end
-   MSG.error_message(msg)
+   MSG.error_message(compose_msg(msg, node))
 end
 tree.error_message = error_message
 
 local function error_check(cond, msg, node)
    if cond then
-	  local msg = msg or ""
-	  if node then
-		 msg = msg.." at "..compose_line_and_file_string(node)
-	  end
-	  original_error_message(msg)
+	  error_message(msg, node)
    end
 end
 tree.error_check = error_check
