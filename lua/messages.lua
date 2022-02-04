@@ -56,6 +56,42 @@ local function warning(msg)
 end
 messages.warning = warning
 
+local function warnings_buffer_add(warn_buf, msg)
+   warn_buf[#warn_buf+1] = msg
+end
+messages.warnings_buffer_add = warnings_buffer_add
+
+local function warnings_buffer_write(warn_buf)
+   if next(warn_buf) then
+	  table.sort(warn_buf)
+	  for i=1,#warn_buf do
+		 warning(warn_buf[i])
+	  end
+   end
+end
+messages.warnings_buffer_write = warnings_buffer_write
+
+local function warnings_buffer_write1(verbose, warn_buf)
+   if verbose > 0 then
+      warnings_buffer_write(warn_buf)
+   end
+end
+messages.warnings_buffer_write1 = warnings_buffer_write1
+
+local function warnings_buffer_write2(verbose, warn_buf)
+   if verbose > 1 then
+      warnings_buffer_write(warn_buf)
+   end
+end
+messages.warnings_buffer_write2 = warnings_buffer_write2
+
+local function warnings_buffer_write3(verbose, warn_buf)
+   if verbose > 2 then
+      warnings_buffer_write(warn_buf)
+   end
+end
+messages.warnings_buffer_write3 = warnings_buffer_write3
+
 -------------------------------------------------------------------------------
 -- Errors
 
