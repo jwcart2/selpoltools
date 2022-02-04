@@ -1584,13 +1584,15 @@ local function parse_m4_module_block(state, kind, cur, node, parse_func)
 	  warning_message(state, "Module name "..tostring(name)..
 					  " is not the same as filename "..tostring(module_name), 0)
    end
-   get_expected(state, ",")
-   local version = {}
-   while lex_peek(state.lex) ~= ")" do
-	  version[#version+1] = lex_get(state.lex)
+   if lex_peek(state.lex) == "," then
+	  -- skip module version, if present
+	  get_expected(state, ",")
+	  while lex_peek(state.lex) ~= ")" do
+		 lex_get(state.lex)
+	  end
    end
    get_expected(state, ")")
-   node_set_data(node, {name, table.concat(version)})
+   node_set_data(node, {name})
    local notallowed = {file=true, policy_module=true, module=true,}
    local block = parse_func(state, node, notallowed, nil)
    NODE.set_block(node, block)
