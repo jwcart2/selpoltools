@@ -160,11 +160,8 @@ if not next(in_files) then
 end
 
 -------------------------------------------------------------------------------
-local head = NODE.create("policy", false, false, false)
--- For policy is that is in turned off modules
-
-REFPOL_PARSE.parse_refpolicy_policy(in_files, inactive_files, head, cdefs, tunables,
-				    verbose)
+local head = REFPOL_PARSE.parse_refpolicy_policy(in_files, inactive_files, cdefs,
+												 tunables, verbose)
 
 TREE.disable_inactive(head)
 

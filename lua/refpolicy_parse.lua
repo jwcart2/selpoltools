@@ -1872,13 +1872,14 @@ end
 
 -------------------------------------------------------------------------------	 
 local function parse_refpolicy_policy(active_files, inactive_files,
-									  head, cdefs, tunables, verbose)
+									  cdefs, tunables, verbose)
    MSG.verbose_out("\nParse Refpolicy Policy", verbose, 0)
 
    local lex_state = LEX.create(active_files, 4)
    local state = {verbose=verbose, lex=lex_state, rules=rules, blocks=blocks,
 				  cdefs=cdefs, tunables=tunables, warnings={}}
 
+   local head = NODE.create("policy", false, false, false)
    local block1 = parse_files(state, head)
    TREE.set_active(head, block1)
    TREE.enable_active(head)
@@ -1901,6 +1902,7 @@ local function parse_refpolicy_policy(active_files, inactive_files,
    end
 
    MSG.warnings_buffer_write(state.warnings)
+   return head
 end
 refpolicy_parse.parse_refpolicy_policy = parse_refpolicy_policy
 
