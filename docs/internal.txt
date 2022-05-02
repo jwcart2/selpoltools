@@ -1,0 +1,318 @@
+# Set ops
+#  (Internal = Refpolicy)
+#  (Except get_expression() doesn't convert. Error???)
+#  all = *
+#  not = ~
+#  neg = -
+
+# Conditional ops
+#  (Internal = Refpolicy)
+#  (Except get_expression() doesn't convert. Error???)
+#  not = !
+#  xor = ^
+#  and = &&
+#   or = ||
+#   eq = ==
+#  neq = !=
+
+# Used identifiers
+#  (Used for macros)
+#  used = {flavor = {value = true}, ...}
+
+# Decl - decl
+#  (Used for macros?)
+#  decls = {flavor = {value = true}, ...}
+
+# Quoted strings - qstr
+#  Just stored as identifiers
+
+# Comma separated lists - clist
+#  Stored as lists
+
+# Expressions - exp
+#  (Operators are not converted. Error ?)
+#  (Operators stay in same position. Not converted to a specific *fix)
+#  expr = {subexpr1, ...}
+
+# Conditional expressions - cexp
+#  Stored as an expression
+
+# Lists - list
+#  Stored as an expression with no operations
+
+# Set: get_set() - set
+#  One element is stored as an identifier, more than one stored as an expression
+
+# Class: get_class() - class_set
+#  One element is stored as an identifier, more than one stored as an expression
+
+# Perms: get_perms() - perm_set
+#  One element is stored as an identifier, more than one stored as an expression
+
+# Def Perms: get_def_perms() - perm_list
+#  Stored as a list
+
+# X Perms: get_xperms() - xperm_list
+#  One element is stored as an identifier, more than one stored as a list
+
+# MLS Categories - mls_cats
+#  {cat|catrange, ...}
+#  catrange = {cat1 cat2}
+
+# MLS Level - mls_level
+#  namedlevel
+#  {sensitivity}
+#  {sensitivity categories}
+
+# MLS Range - mls_range
+#  {level}
+#  {level, level}
+
+# context
+#  {"<<none>>"}
+#  {user role type range}
+#  {user role type range mcs_categories}
+
+# bool_value
+#  "true" or "false"
+
+# port
+#  {port}
+#  {port port}
+
+# ipaddr
+#  ipaddr string
+
+# Constraint Leaf Expressions - cstr_leaf
+# {left, op, right}
+
+# Constraint Expressions - cstr_exp
+#  cstr_leaf
+#  {"not", cstr_exp}
+#  {cexpr, "and", cstr_exp}
+#  {cexpr, "or", cstr_exp}
+
+##############################################################################
+
+# Policycap
+#  kind="policycap", {capability_name}
+
+# Bool
+#  kind="bool", {bool_name, bool_value}
+
+# Tunable
+#  kind="tunable", {tunable_name, bool_value}
+
+# Sid declaration
+#  kind="sid_decl", {sid_name}
+
+# Sid
+#  kind="sid", {sid_name, context}
+
+# Class declaration
+#  kind="class_decl", {class_name}
+
+# Class
+#  kind="class", {class_name, common_name, perm_list}
+
+# Common
+#  kind="common", {common_name, perm_list}
+
+# default_value
+#  "source" or "target"
+
+# Default User
+#  kind="default_user", {class_name, default_value}
+
+# Default Role
+#  kind="default_role", {class_name, default_value}
+
+# Default Type
+#  kind="default_type", {class_name, default_value}
+
+# range_value
+   "low", "high", or "low_high"
+
+# Default Range
+#  kind="default_range", {class_name, default_value, range_value}
+
+# get_gen_user_role_list()
+#  list of roles and mls_roles
+
+# User
+#  kind="user", {user_name, role_list, mls_level, mls_range}
+
+# Role
+#  kind="role", {role_name, type_set}
+
+# Type
+#  kind="type", {type_name, alias_list, type_attribute_list}
+
+# Type alias
+#  kind="typealias", {type_name, alias_list}
+
+# Type bounds
+#  kind="typebounds", {parent_type, child_type}
+
+# Permissive type
+#  kind="permissive", {type_name}
+
+# Type attribute
+#  kind="attribute", {type_attribute_name}
+
+# Type attributes
+#  kind="typeattribute", {type_name, type_attribute_list}
+
+# Role attribute
+#  kind="attribute_role", {role_attribute_name}
+
+# Role attributes
+#  kind="roleattribute", {role_name, role_attribute_list}
+
+# Sensitivity
+#  kind="sensitivity", {sensitivity_name, alias_list}
+
+# Dominance
+#  kind="dominance", {sensitivity_list}
+
+# Category
+#  kind="category", {category_name, alias_list}
+
+# Level
+#  kind="level", {level}
+
+# gen_sens
+#  Create sensitivity rules from s0 up to sN where N is num_sens-1
+#  Create dominance rule for all the sensitivities
+
+# gen_cats
+#  Create category rules from c0 up to cM where M is num_cats-1
+
+# gen_levels
+#  Create level rules for each sensitivity from s0 up to sN where N is
+#  num_sens-1 with category range from c0 to cM where M is num_cats-1
+
+##############################################################################
+
+# Allow rule
+#  kind="allow", {type_set, type_set, class_set, perm_set}
+
+# Dontaudit rule
+#  kind="dontaudit", {type_set, type_set, class_set, perm_set}
+
+# Auditallow rule
+#  kind="auditallow", {type_set, type_set, class_set, perm_set}
+
+# Neverallow rule
+#  kind="neverallow", {type_set, type_set, class_set, perm_set}
+
+# AllowX rule
+#  kind="allowxperm", {type_set, type_set, class_set, "ioctl", xperm_list}
+
+# NeverallowX rule
+#  kind="neverallowxperm", {type_set, type_set, class_set, "ioctl", xperm_list}
+
+# Type transition rule
+#  kind="type_transition", {type_set, type_set, class_set, new_type, "*"|filename}
+
+# Type change rule
+#  kind="type_change", {type_set, type_set, class_set, type_identifier}
+
+# Type member rule
+#  kind="type_member", {type_set, type_set, class_set, type_identifier}
+
+# Range transition
+#  kind="range_transition", {type_set, type_set, class_set, mls_range}
+
+# Role allow
+#  kind="role_allow", {role_set, role_set}
+
+# Role transition
+#  kind="role_transition", {role_set, role_set, role_name}
+
+# Constrain rule
+#  kind="constrain", {class_set, perm_set, cstr_expr}
+
+# MLS Constrain rule
+#  kind="mlsconstrain", {class_set, perm_set, cstr_expr}
+
+# Validatetrans rule
+#  kind="validatetrans", {class_set, cstr_expr}
+
+# MLS Validatetrans rule
+#  kind="mlsvalidatetrans", {class_set, cstr_expr}
+
+# File type
+#  "-b", "-c", "-d", "-p", "-l", "-s", or "--"
+
+# File context rule
+#  kind="filecon", {path, file_type, context}
+
+# File use xattr rule
+#  kind="fs_use_xattr", {fs_name, context}
+
+# File use task rule
+#  kind="fs_use_task", {fs_name, context}
+
+# File use trans rule
+#  kind="fs_use_trans", {fs_name, context}
+
+# Genfscon rule
+#  kind="genfscon", {fs_name, path, file_type, context}
+
+# Netifcon rule
+#  kind="netifcon", {interface, context, context}
+
+# Nodecon rule
+#  kind="nodecon", {subnet_ip_addr, netmask_ip_addr, context}
+
+# Protocol
+# "udp", "tcp", "dccp", or "sctp"
+
+# Portcon rule
+#  kind="portcon", {protocol, ports, context}
+
+# Macro call
+#  kind="call", {name, orig_args, exp_args, decls}
+
+# Module rule
+#  kind="module", {name}
+
+# boolif block
+#  kind="boolif", {cond_exp} [then] [else]
+
+# optional block
+#  kind="optional", {} [then] [else]
+
+# tunable_policy block
+#  kind="tunif", {cond_exp} [then] [else]
+
+# ifdef block
+#  kind="ifdef", {cond_exp} [then] [else]
+
+# ifelse block
+#  kind="ifelse", {v1, v2} [then] [else]
+
+# tunable rule
+#  kind="tunable", {name, true|false}
+
+# def block
+#  kind="def", {name, list|expr}
+
+# macro block
+#  kind="macro", {name, orig_flavors, expanded_args, compound_args,
+                  decls, used, requires, param_info, flags} [block]
+
+# interface block
+#  kind="interface", {name, orig_flavors, expanded_args, compound_args,
+                  decls, used, requires, param_info, flags} [block]
+
+# template block
+#  kind="template", {name, orig_flavors, expanded_args, compound_args,
+                  decls, used, requires, param_info, flags} [block]
+
+# file
+#  kind="file", {name} [block]
+
+# Policy
+#  kind="policy", {active, inactive}
