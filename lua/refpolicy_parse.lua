@@ -643,7 +643,8 @@ local function parse_class_rule(state, kind, cur, node)
 	  node_set_data(node, {class})
    else -- class instantiation
 	  local class = get_identifier(state, "class")
-	  local common, perms
+	  local common = false
+	  local perms = false
 	  if lex_peek(state.lex) == "inherits" then
 		 lex_next(state.lex)
 		 common = get_identifier(state, "common")
@@ -834,7 +835,8 @@ end
 local function parse_type_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local type_ = get_declaration(state, "type")
-   local aliases, attributes
+   local aliases = false
+   local attributes = false
    if lex_peek(state.lex) == "alias" then
 	  lex_next(state.lex)
 	  aliases = get_declaration_or_list(state, "type", "{", "}")
@@ -912,7 +914,7 @@ end
 local function parse_sensitivity_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local sensitivity = get_declaration(state, "sensitivity")
-   local aliases
+   local aliases = false
    if lex_peek(state.lex) == "alias" then
 	  lex_next(state.lex)
 	  aliases = get_declaration_or_list(state, "sensitivity", "{", "}")
@@ -932,7 +934,7 @@ end
 local function parse_category_rule(state, kind, cur, node)
    tree_add_node(cur, node)
    local category = get_declaration(state, "category")
-   local aliases
+   local aliases = false
    if lex_peek(state.lex) == "alias" then
 	  lex_next(state.lex)
 	  aliases = get_declaration_or_list(state, "category", "{", "}")
@@ -1078,7 +1080,7 @@ local function parse_type_change_rule(state, kind, cur, node)
    local tgt = get_identifier_or_set(state, "type")
    get_expected(state, ":")
    local class = get_class(state)
-   local new = get_identifier_or_set(state, "type")
+   local new = get_identifier(state, "type")
    node_set_data(node, {src, tgt, class, new})
    get_expected(state, ";")
    return node
@@ -1090,7 +1092,7 @@ local function parse_type_member_rule(state, kind, cur, node)
    local tgt = get_identifier_or_set(state, "type")
    get_expected(state, ":")
    local class = get_class(state)
-   local new = get_identifier_or_set(state, "type")
+   local new = get_identifier(state, "type")
    node_set_data(node, {src, tgt, class, new})
    get_expected(state, ";")
    return node
@@ -1290,7 +1292,7 @@ local function parse_macro_call(state, name, cur, node)
 	  end
    end
    get_expected(state, ")")
-   MACRO.set_call_data(node, name, call_args, false, false, false, false)
+   MACRO.set_call_data(node, name, call_args, false, false)
    return node
 end
 
