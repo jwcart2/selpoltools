@@ -71,25 +71,26 @@ end
 -------------------------------------------------------------------------------
 local function collect_def(node, kind, do_action, do_block, data)
    local node_data = NODE.get_data(node)
-   local name= node_data[1]
-   if string.find(name, "_class_set$") then
+   local kind = node_data[1]
+   local name = node_data[2]
+   if kind == "class" then
 	  if data.class_sets[name] then
 		 local msg = "Duplicate definition of class obj_perm_set "..tostring(name)
 		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
-	  data.class_sets[name] = list_to_set(node_data[2])
-   elseif string.find(name, "_perms$") then
+	  data.class_sets[name] = list_to_set(node_data[3])
+   elseif kind == "perm" then
 	  if data.perm_sets[name] then
 		 local msg = "Duplicate definition of permission obj_perm_set "..tostring(name)
 		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
-	  data.perm_sets[name] = list_to_set(node_data[2])
-   elseif string.find(name, "basic_ubac_conditions") then
+	  data.perm_sets[name] = list_to_set(node_data[3])
+   elseif kind == "cstr_exp" then
 	  if data.cstr_defs[name] then
 		 local msg = "Duplicate definition of  "..tostring(name)
 		 MSG.warnings_buffer_add(data.warnings, msg)
 	  end
-	  data.cstr_defs[name] = node_data[2]
+	  data.cstr_defs[name] = node_data[3]
    else
 	  local msg = "Found unknown def called "..tostring(name)
 	  MSG.warnings_buffer_add(data.warnings, msg)

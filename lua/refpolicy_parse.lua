@@ -1539,15 +1539,24 @@ local function parse_m4_define_block(state, kind, cur, node, parse_func)
 		 return cur
 	  end
    elseif string.find(file,"obj_perm_sets.spt",1,true) then
+	  local kind
+	  if string.find(name, "_class_set$") then
+		 kind = "class"
+	  elseif string.find(name, "_perms$") then
+		 kind = "perm"
+	  else
+		 error_message(state, "Expected either a class or permission set, not a"..
+					   tostring(name))
+	  end
 	  local list = parse_obj_perm_set(state)
 	  node_set_kind(node, "def")
-	  node_set_data(node, {name, list})
+	  node_set_data(node, {kind, name, list})
 	  tree_add_node(cur, node)
 	  return node
    elseif name == "basic_ubac_conditions" then
 	  local expr = parse_basic_ubac_conditions(state)
 	  node_set_kind(node, "def")
-	  node_set_data(node, {name, expr})
+	  node_set_data(node, {"cstr_exp", name, expr})
 	  tree_add_node(cur, node)
 	  return node
    elseif lex_peek(state.lex) == "{" then

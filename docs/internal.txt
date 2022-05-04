@@ -296,8 +296,8 @@
 # tunable rule
 #  kind="tunable", {name, true|false}
 
-# def block
-#  kind="def", {name, list|expr}
+# def rule
+#  kind="def", {"class"|"perm"|"cstr_exp", name, list|expr}
 
 # macro block
 #  kind="macro", {name, orig_flavors, expanded_args, compound_args,

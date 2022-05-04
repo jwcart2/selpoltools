@@ -795,21 +795,17 @@ end
 
 local function buffer_def_rule(buf, format, node)
    local node_data = NODE.get_data(node)
-   local name = node_data[1]
-   local list = compose_list(node_data[2])
-   local kind
-   if string.find(name, "_class_set$") then
-	  kind = "class"
-	  list = compose_list(node_data[2])
-   elseif string.find(name, "_perms$") then
-	  kind = "perm"
-	  list = compose_list(node_data[2])
-   elseif name == "basic_ubac_conditions" then
-	  kind = "cexp"
-	  list = compose_constraint(node_data[2])
+   local kind = node_data[1]
+   local name = node_data[2]
+   local list
+   if kind == "class" then
+	  list = compose_list(node_data[3])
+   elseif kind == "perm" then
+	  list = compose_list(node_data[3])
+   elseif kind == "cstr_exp" then
+	  list = compose_constraint(node_data[3])
    else
-	  kind = "unknown"
-	  list = compose_list(node_data[2])
+	  MSG.error_message("Unknown def rule: "..tostring(name))
    end
    local str = "def "..kind.." "..tostring(name).." "..list..";"
    STRING.add_to_buffer(buf, format, str)
