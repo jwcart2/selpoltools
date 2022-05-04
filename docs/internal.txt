@@ -314,5 +314,11 @@
 # file
 #  kind="file", {name} [block]
 
+# blank
+#  kind="blank"
+
+# comment
+#  kind="comment", {comment}
+
 # Policy
 #  kind="policy", {active, inactive}

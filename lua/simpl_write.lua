@@ -832,7 +832,6 @@ end
 
 local function buffer_blank_rule(buf, format, node)
    local node_data = NODE.get_data(node)
-   local comment = node_data[1]
    local str = ""
    STRING.add_to_buffer(buf, format, str)
 end

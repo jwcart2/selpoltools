@@ -21,7 +21,7 @@ local function get_comments_from_file(node, kind, do_action, do_block, data)
    local lineno = 1
    for l in f:lines() do
 	  if l == "" then
-		 comments[#comments+1] = {"blank", lineno, line}
+		 comments[#comments+1] = {"blank", lineno}
 	  end
 	  local s,e = string_find(l,"^%s*#")
 	  if s then
@@ -99,7 +99,9 @@ local function add_comments_to_block(block, parent, file, comments, i)
 		 local comment = comments[j]
 		 local kind = comment[1]
 		 local new = NODE.create(kind, parent, file, comment[2])
-		 NODE.set_data(new, {comment[3]})
+		 if kind == "comment" then
+			NODE.set_data(new, {comment[3]})
+		 end
 		 if prev then
 			TREE.add_node(prev, new)
 		 else
