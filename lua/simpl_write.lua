@@ -832,6 +832,10 @@ local function buffer_blank_rule(buf, format, node)
    STRING.add_to_buffer(buf, format, str)
 end
 
+local function buffer_module_rule(buf, format, node)
+   -- Do nothing
+end
+
 local simpl_rules = {
    ["handleunknown"] = buffer_handleunknown_rule,
    ["mls"] = buffer_mls_rule,
@@ -900,6 +904,7 @@ local simpl_rules = {
    ["order"] = buffer_order_rule,
    ["comment"] = buffer_comment_rule,
    ["blank"] = buffer_blank_rule,
+   ["module"] = buffer_module_rule, -- Skip
 }
 
 -------------------------------------------------------------------------------
@@ -916,14 +921,6 @@ local function buffer_block_rules(buf, format, block, do_rules, do_blocks)
 	  end
 	  cur = NODE.get_next(cur)
    end
-end
-
-local function buffer_module_block(buf, format, node, do_rules, do_blocks)
-   local mod_data = NODE.get_data(node)
-   local version = mod_data[2]
-   local str = "module "..tostring(version)..";"
-   STRING.add_to_buffer(buf, format, str)
-   buffer_block_rules(buf, format, NODE.get_block(node), do_rules, do_blocks)
 end
 
 local function buffer_conditional_rules(buf, format, node, do_rules, do_blocks)
@@ -1113,7 +1110,6 @@ local function buffer_macro_block(buf, format, node, do_rules, do_blocks)
 end
 
 local simpl_blocks = {
-   ["module"] = buffer_module_block,
    ["ifdef"] = buffer_ifdef_block,
    ["ifelse"] = buffer_ifelse_block,
    ["tunif"] = buffer_tunif_block,
